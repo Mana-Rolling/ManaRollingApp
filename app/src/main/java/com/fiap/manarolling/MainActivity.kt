@@ -11,24 +11,35 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fiap.manarolling.ui.ChapterEditorScreen
 import com.fiap.manarolling.ui.CharacterDetailScreen
 import com.fiap.manarolling.ui.CharacterViewModel
 import com.fiap.manarolling.ui.CreateCharacterScreen
+import com.fiap.manarolling.ui.EditCharacterScreen
 import com.fiap.manarolling.ui.ListCharactersScreen
 import com.fiap.manarolling.ui.Routes
-import com.fiap.manarolling.ui.StoryEditorScreen
+import com.fiap.manarolling.ui.StoryScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val nav = rememberNavController()
-            val vm: CharacterViewModel = viewModel() // AndroidViewModel: usa DefaultFactory
+            val vm: CharacterViewModel = viewModel() // AndroidViewModel via DefaultFactory
 
             Surface(color = MaterialTheme.colorScheme.background) {
                 NavHost(navController = nav, startDestination = Routes.LIST) {
-                    composable(Routes.LIST) { ListCharactersScreen(vm, nav) }
-                    composable(Routes.CREATE) { CreateCharacterScreen(vm, nav) }
+                    // Lista de personagens
+                    composable(Routes.LIST) {
+                        ListCharactersScreen(vm, nav)
+                    }
+
+                    // Criar personagem
+                    composable(Routes.CREATE) {
+                        CreateCharacterScreen(vm, nav)
+                    }
+
+                    // Detalhe do personagem
                     composable(
                         route = "${Routes.DETAIL}/{id}",
                         arguments = listOf(navArgument("id") { type = NavType.LongType })
@@ -36,12 +47,45 @@ class MainActivity : ComponentActivity() {
                         val id = backStack.arguments?.getLong("id") ?: 0L
                         CharacterDetailScreen(vm, id, nav)
                     }
+
+                    // Editar personagem
+                    composable(
+                        route = "${Routes.EDIT}/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.LongType })
+                    ) { backStack ->
+                        val id = backStack.arguments?.getLong("id") ?: 0L
+                        EditCharacterScreen(vm, id, nav)
+                    }
+
+                    // Lista da história (capítulos) do personagem
                     composable(
                         route = "${Routes.STORY}/{id}",
                         arguments = listOf(navArgument("id") { type = NavType.LongType })
                     ) { backStack ->
                         val id = backStack.arguments?.getLong("id") ?: 0L
-                        StoryEditorScreen(vm, id, nav)
+                        StoryScreen(vm, id, nav)
+                    }
+
+                    // Criar capítulo
+                    composable(
+                        route = "${Routes.CHAPTER_CREATE}/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.LongType })
+                    ) { backStack ->
+                        val id = backStack.arguments?.getLong("id") ?: 0L
+                        ChapterEditorScreen(vm, id, nav)
+                    }
+
+                    // Editar capítulo
+                    composable(
+                        route = "${Routes.CHAPTER_EDIT}/{charId}/{chapterId}",
+                        arguments = listOf(
+                            navArgument("charId") { type = NavType.LongType },
+                            navArgument("chapterId") { type = NavType.LongType }
+                        )
+                    ) { backStack ->
+                        val charId = backStack.arguments?.getLong("charId") ?: 0L
+                        val chapterId = backStack.arguments?.getLong("chapterId") ?: 0L
+                        ChapterEditorScreen(vm, charId, nav, chapterId)
                     }
                 }
             }

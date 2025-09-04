@@ -15,11 +15,7 @@ import com.fiap.manarolling.model.Character
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterDetailScreen(
-    vm: CharacterViewModel,
-    id: Long,
-    nav: NavController
-) {
+fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
     val c: Character? = vm.getCharacter(id)
 
     Scaffold(
@@ -33,39 +29,31 @@ fun CharacterDetailScreen(
                 },
                 actions = {
                     if (c != null) {
-                        IconButton(onClick = {
-                            vm.deleteCharacter(c.id)
-                            nav.popBackStack() // volta para a lista
-                        }) {
+                        IconButton(onClick = { nav.navigate("${Routes.EDIT}/$id") }) {
+                            Icon(Icons.Filled.Edit, contentDescription = "Editar personagem")
+                        }
+                        IconButton(onClick = { vm.deleteCharacter(c.id); nav.popBackStack() }) {
                             Icon(Icons.Filled.Delete, contentDescription = "Excluir")
                         }
                     }
                 }
             )
         },
-        // ✅ Botão flutuante para continuar a história
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { nav.navigate("${Routes.STORY}/$id") },
-                icon = { Icon(Icons.Filled.Edit, contentDescription = null) },
-                text = { Text("Escrever história") }
+                text = { Text("Ver história") },
+                icon = { Icon(Icons.Filled.Edit, contentDescription = null) }
             )
         }
     ) { pad ->
         if (c == null) {
-            Box(
-                Modifier.padding(pad).fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
+            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Personagem não encontrado")
             }
         } else {
-            Column(
-                Modifier.padding(pad).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            Column(Modifier.padding(pad).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("${c.avatarEmoji} ${c.name}", style = MaterialTheme.typography.headlineSmall)
-
                 ElevatedCard(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Região: ${c.region}")
@@ -74,12 +62,10 @@ fun CharacterDetailScreen(
                         Text("Nível: ${c.level}")
                     }
                 }
-
                 Text("Atributos", style = MaterialTheme.typography.titleMedium)
                 AttributeStat("Inteligência", c.attributes.intelligence)
                 AttributeStat("Destreza", c.attributes.dexterity)
                 AttributeStat("Força", c.attributes.strength)
-
                 Text("Pontos restantes: ${c.availablePoints}")
             }
         }
