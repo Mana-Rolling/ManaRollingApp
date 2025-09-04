@@ -16,6 +16,7 @@ import com.fiap.manarolling.ui.CharacterViewModel
 import com.fiap.manarolling.ui.CreateCharacterScreen
 import com.fiap.manarolling.ui.ListCharactersScreen
 import com.fiap.manarolling.ui.Routes
+import com.fiap.manarolling.ui.StoryEditorScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +35,13 @@ class MainActivity : ComponentActivity() {
                     ) { backStack ->
                         val id = backStack.arguments?.getLong("id") ?: 0L
                         CharacterDetailScreen(vm, id, nav)
+                    }
+                    composable(
+                        route = "${Routes.STORY}/{id}",
+                        arguments = listOf(navArgument("id") { type = NavType.LongType })
+                    ) { backStack ->
+                        val id = backStack.arguments?.getLong("id") ?: 0L
+                        StoryEditorScreen(vm, id, nav)
                     }
                 }
             }

@@ -1,7 +1,9 @@
 package com.fiap.manarolling.ui
 
 object Routes {
-    const val LIST = "list"      // Tela de listagem de personagens
-    const val CREATE = "create"  // Tela de criação
-    const val DETAIL = "detail"  // Tela de detalhes (usa /{id})
+    const val LIST = "list"
+    const val CREATE = "create"
+    const val DETAIL = "detail"
+
+    const val STORY = "story"
 }

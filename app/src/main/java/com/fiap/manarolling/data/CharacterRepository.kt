@@ -1,5 +1,6 @@
 package com.fiap.manarolling.data
 
+import com.fiap.manarolling.model.Chapter
 import com.fiap.manarolling.model.Character
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,5 +45,39 @@ class CharacterRepository(
     private fun persist(list: List<Character>) {
         // grava em arquivo fora da UI thread
         scope.launch(Dispatchers.IO) { store.writeAll(list) }
+    }
+
+
+
+    fun addChapter(characterId: Long, chapter: Chapter) {
+        val updated = _characters.value.map { ch ->
+            if (ch.id == characterId) {
+                ch.copy(story = ch.story.copy(chapters = ch.story.chapters + chapter))
+            } else ch
+        }
+        _characters.value = updated
+        persist(updated)
+    }
+
+    fun updateChapter(characterId: Long, chapter: Chapter) {
+        val updated = _characters.value.map { ch ->
+            if (ch.id == characterId) {
+                val newList = ch.story.chapters.map { if (it.id == chapter.id) chapter else it }
+                ch.copy(story = ch.story.copy(chapters = newList))
+            } else ch
+        }
+        _characters.value = updated
+        persist(updated)
+    }
+
+    fun deleteChapter(characterId: Long, chapterId: Long) {
+        val updated = _characters.value.map { ch ->
+            if (ch.id == characterId) {
+                val newList = ch.story.chapters.filterNot { it.id == chapterId }
+                ch.copy(story = ch.story.copy(chapters = newList))
+            } else ch
+        }
+        _characters.value = updated
+        persist(updated)
     }
 }

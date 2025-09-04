@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +41,14 @@ fun CharacterDetailScreen(
                         }
                     }
                 }
+            )
+        },
+        // ✅ Botão flutuante para continuar a história
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { nav.navigate("${Routes.STORY}/$id") },
+                icon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                text = { Text("Escrever história") }
             )
         }
     ) { pad ->

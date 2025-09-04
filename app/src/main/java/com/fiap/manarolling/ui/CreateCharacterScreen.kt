@@ -34,7 +34,7 @@ fun CreateCharacterScreen(vm: CharacterViewModel, nav: NavController) {
     var clazz by remember { mutableStateOf("") }
     var level by remember { mutableStateOf("1") }
 
-    // Picker simples de avatar por emoji
+
     val emojiOptions = listOf("🧙", "🗡️", "🛡️", "🏹", "🧝", "🐺")
     var avatarEmoji by remember { mutableStateOf(emojiOptions.first()) }
     var emojiExpanded by remember { mutableStateOf(false) }
@@ -148,7 +148,7 @@ fun CreateCharacterScreen(vm: CharacterViewModel, nav: NavController) {
 
             Text("Pontos disponíveis: $points", style = MaterialTheme.typography.titleMedium)
 
-            // ✅ Agora é @Composable
+
             @Composable
             fun RowAttr(title: String, value: Int, set: (Int) -> Unit) {
                 ElevatedCard(Modifier.fillMaxWidth()) {
@@ -194,7 +194,7 @@ fun CreateCharacterScreen(vm: CharacterViewModel, nav: NavController) {
                         attributes = Attributes(intel, dex, str)
                     )
                     vm.addCharacter(c)
-                    nav.navigate("${Routes.DETAIL}/${c.id}") {
+                    nav.navigate("${Routes.STORY}/${c.id}") {
                         popUpTo(Routes.LIST) { inclusive = false }
                     }
                 },
@@ -203,7 +203,7 @@ fun CreateCharacterScreen(vm: CharacterViewModel, nav: NavController) {
             ) {
                 Icon(Icons.Filled.Save, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("Salvar e Visualizar")
+                Text("Salvar e Escrever História")
             }
         }
     }

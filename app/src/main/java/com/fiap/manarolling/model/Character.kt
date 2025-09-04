@@ -1,4 +1,4 @@
-package com.fiap.manarolling.model
+ package com.fiap.manarolling.model
 
 import kotlinx.serialization.Serializable
 
@@ -21,5 +21,6 @@ data class Character (
     var level: Int = 1,
     var availablePoints: Int = 10,
     var avatarEmoji: String = "🧙", // placeholder
-    var attributes: Attributes = Attributes(5, 5, 5)
+    var attributes: Attributes = Attributes(5, 5, 5),
+    var story: Story = Story()
 )
