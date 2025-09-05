@@ -5,6 +5,7 @@ import com.fiap.manarolling.R
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,10 +22,29 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+
+val pixelifySansFamily = FontFamily(
+    Font(R.font.pixelify_sans_medium, FontWeight.Medium)
+    // Adicione outras variações de peso/estilo se necessário
+)
+
+val backgroundColor = Color(0xFF0D0D0D)
+val primaryTextColor = Color.Black
+val hintColor = Color(0xFFAAAAAA)
+val accentColor = Color(0xFFA78BFA)
+val cardButtonBgColor = Color(0xFF2D2D2D)
+val bottomMenuBgColor = Color(0xFF1A1A1A)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,12 +52,36 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
     val list = vm.characters.collectAsState().value
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Personagens") }) },
+        modifier = Modifier
+            .background(backgroundColor),
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(57.dp), // Altura do ConstraintLayout - (2 * padding de 16dp) / 2 para alinhar = 89 - 32 = 57
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.mr_logo),
+                    contentDescription = "Logo Mana Rolling",
+                    modifier = Modifier.size(59.dp),
+                    colorFilter = ColorFilter.tint(accentColor)
+                )
+                Text(
+                    text = "Mana Rolling",
+                    color = primaryTextColor,
+                    fontSize = 20.sp,
+                    fontFamily = pixelifySansFamily,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { nav.navigate(Routes.CREATE) }) {
                 Icon(Icons.Filled.Add, contentDescription = "Criar")
             }
-        }
+        },
     ) { pad ->
         if (list.isEmpty()) {
             Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -1,7 +1,5 @@
 package com.fiap.manarolling.ui
 
-
-
 import coil.compose.AsyncImage
 import com.fiap.manarolling.R
 import androidx.compose.ui.layout.ContentScale
