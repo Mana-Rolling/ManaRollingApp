@@ -7,10 +7,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.SportsMartialArts
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,15 +17,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.model.Attributes
-import com.fiap.manarolling.model.Character
+import com.fiap.manarolling.model.ClassPresets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditCharacterScreen(
-    vm: CharacterViewModel,
-    id: Long,
-    nav: NavController
-) {
+fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
     val current = vm.getCharacter(id)
     if (current == null) {
         Scaffold(topBar = { TopAppBar(title = { Text("Editar") }) }) { pad ->
@@ -42,21 +35,46 @@ fun EditCharacterScreen(
     var name by remember(current.id) { mutableStateOf(current.name) }
     var region by remember(current.id) { mutableStateOf(current.region) }
     var age by remember(current.id) { mutableStateOf(current.age.toString()) }
-    var clazz by remember(current.id) { mutableStateOf(current.clazz) }
     var level by remember(current.id) { mutableStateOf(current.level.toString()) }
 
     val emojiOptions = listOf("🧙","🗡️","🛡️","🏹","🧝","🐺")
     var avatarEmoji by remember(current.id) { mutableStateOf(current.avatarEmoji.ifBlank { emojiOptions.first() }) }
     var emojiExpanded by remember { mutableStateOf(false) }
 
+    val classOptions = ClassPresets.options
+    var clazz by remember(current.id) { mutableStateOf(if (current.clazz in classOptions) current.clazz else classOptions.first()) }
+    var clazzExpanded by remember { mutableStateOf(false) }
+
     var intel by remember(current.id) { mutableStateOf(current.attributes.intelligence) }
     var dex by remember(current.id) { mutableStateOf(current.attributes.dexterity) }
     var str by remember(current.id) { mutableStateOf(current.attributes.strength) }
+    var agi by remember(current.id) { mutableStateOf(current.attributes.agility) }
+    var cha by remember(current.id) { mutableStateOf(current.attributes.charisma) }
+
     var points by remember(current.id) { mutableStateOf(current.availablePoints) }
 
-    fun inc(set: (Int)->Unit, v: Int) { if (points > 0 && v < 20) { set(v+1); points-- } }
-    fun dec(set: (Int)->Unit, v: Int) { if (v > 0) { set(v-1); points++ } }
-    fun attrBar(v: Int) = v / 20f
+    // Baseline atual da classe (piso)
+    val base: Attributes by remember(clazz) {
+        mutableStateOf(ClassPresets.base[clazz] ?: Attributes())
+    }
+
+    // Ao mudar a classe no editor:
+    // - aplica os valores base
+    // - reseta pool de pontos para 10
+    LaunchedEffect(clazz) {
+        ClassPresets.base[clazz]?.let { b ->
+            intel = b.intelligence
+            dex   = b.dexterity
+            str   = b.strength
+            agi   = b.agility
+            cha   = b.charisma
+        }
+        points = 10
+    }
+
+    fun inc(set: (Int)->Unit, v: Int) { if (points > 0 && v < 50) { set(v+1); points-- } }
+    fun dec(set: (Int)->Unit, v: Int, floor: Int) { if (v > floor) { set(v-1); points++ } }
+    fun attrBar(v: Int) = (v.coerceIn(0, 50)) / 50f
 
     Scaffold(
         topBar = {
@@ -70,28 +88,19 @@ fun EditCharacterScreen(
             )
         }
     ) { pad ->
-        Column(
-            Modifier.padding(pad).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Column(Modifier.padding(pad).padding(16.dp).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
+
             // Avatar + Nome
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ExposedDropdownMenuBox(
-                    expanded = emojiExpanded,
-                    onExpandedChange = { emojiExpanded = !emojiExpanded }
-                ) {
+                ExposedDropdownMenuBox(expanded = emojiExpanded, onExpandedChange = { emojiExpanded = !emojiExpanded }) {
                     OutlinedTextField(
-                        value = avatarEmoji,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Avatar") },
-                        leadingIcon = { Icon(Icons.Filled.Badge, null) },
+                        value = avatarEmoji, onValueChange = {}, readOnly = true,
+                        label = { Text("Avatar") }, leadingIcon = { Icon(Icons.Filled.Badge, null) },
                         modifier = Modifier.menuAnchor().width(110.dp)
                     )
                     ExposedDropdownMenu(expanded = emojiExpanded, onDismissRequest = { emojiExpanded = false }) {
-                        emojiOptions.forEach { e ->
-                            DropdownMenuItem(text = { Text(e) }, onClick = { avatarEmoji = e; emojiExpanded = false })
-                        }
+                        emojiOptions.forEach { e -> DropdownMenuItem(text = { Text(e) }, onClick = { avatarEmoji = e; emojiExpanded = false }) }
                     }
                 }
                 Spacer(Modifier.width(12.dp))
@@ -115,12 +124,20 @@ fun EditCharacterScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth()
             )
-            OutlinedTextField(
-                value = clazz, onValueChange = { clazz = it },
-                label = { Text("Classe") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth()
-            )
+
+            // Classe (dropdown)
+            ExposedDropdownMenuBox(expanded = clazzExpanded, onExpandedChange = { clazzExpanded = !clazzExpanded }) {
+                OutlinedTextField(
+                    value = clazz, onValueChange = {}, readOnly = true,
+                    label = { Text("Classe") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = clazzExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(expanded = clazzExpanded, onDismissRequest = { clazzExpanded = false }) {
+                    classOptions.forEach { opt -> DropdownMenuItem(text = { Text(opt) }, onClick = { clazz = opt; clazzExpanded = false }) }
+                }
+            }
+
             OutlinedTextField(
                 value = level, onValueChange = { level = it.filter { ch -> ch.isDigit() } },
                 label = { Text("Nível") }, singleLine = true,
@@ -131,7 +148,7 @@ fun EditCharacterScreen(
             Text("Pontos disponíveis: $points", style = MaterialTheme.typography.titleMedium)
 
             @Composable
-            fun RowAttr(title: String, value: Int, set: (Int)->Unit) {
+            fun RowAttr(title: String, value: Int, floor: Int, set: (Int)->Unit) {
                 ElevatedCard(Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth().padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -139,20 +156,28 @@ fun EditCharacterScreen(
                         Column(Modifier.weight(1f)) {
                             Text(title, style = MaterialTheme.typography.titleSmall)
                             LinearProgressIndicator(progress = { attrBar(value) }, modifier = Modifier.fillMaxWidth())
-                            Text("$value / 20", style = MaterialTheme.typography.bodySmall)
+                            Text("$value / 50 (mín: $floor)", style = MaterialTheme.typography.bodySmall)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            OutlinedButton(onClick = { dec(set, value) }) { Text("-") }
+                            OutlinedButton(
+                                onClick = { dec(set, value, floor) },
+                                enabled = value > floor
+                            ) { Text("-") }
                             Spacer(Modifier.height(6.dp))
-                            Button(onClick = { inc(set, value) }) { Text("+") }
+                            Button(
+                                onClick = { inc(set, value) },
+                                enabled = points > 0 && value < 50
+                            ) { Text("+") }
                         }
                     }
                 }
             }
 
-            RowAttr("Inteligência", intel) { intel = it }
-            RowAttr("Destreza", dex) { dex = it }
-            RowAttr("Força", str) { str = it }
+            RowAttr("Inteligência", intel, base.intelligence) { intel = it }
+            RowAttr("Destreza",     dex,   base.dexterity)    { dex = it }
+            RowAttr("Força",        str,   base.strength)     { str = it }
+            RowAttr("Agilidade",    agi,   base.agility)      { agi = it }
+            RowAttr("Carisma",      cha,   base.charisma)     { cha = it }
 
             Spacer(Modifier.height(8.dp))
             Button(
@@ -165,10 +190,10 @@ fun EditCharacterScreen(
                         level = level.toIntOrNull() ?: current.level,
                         availablePoints = points,
                         avatarEmoji = avatarEmoji,
-                        attributes = Attributes(intel, dex, str)
+                        attributes = Attributes(intel, dex, str, agi, cha)
                     )
                     vm.updateCharacter(updated)
-                    nav.popBackStack() // retorna para o detalhe
+                    nav.popBackStack()
                 },
                 enabled = name.isNotBlank(),
                 modifier = Modifier.fillMaxWidth().height(56.dp)

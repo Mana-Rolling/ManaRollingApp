@@ -66,6 +66,8 @@ fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) 
                 AttributeStat("Inteligência", c.attributes.intelligence)
                 AttributeStat("Destreza", c.attributes.dexterity)
                 AttributeStat("Força", c.attributes.strength)
+                AttributeStat("Agilidade", c.attributes.agility)
+                AttributeStat("Carisma", c.attributes.charisma)
                 Text("Pontos restantes: ${c.availablePoints}")
             }
         }
@@ -74,11 +76,12 @@ fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) 
 
 @Composable
 private fun AttributeStat(label: String, value: Int) {
+    fun attrBar(v: Int) = (v.coerceIn(0, 50)) / 50f
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.titleSmall)
-            LinearProgressIndicator(progress = { value / 20f }, modifier = Modifier.fillMaxWidth())
-            Text("$value / 20", style = MaterialTheme.typography.bodySmall)
+            LinearProgressIndicator(progress = { attrBar(value) }, modifier = Modifier.fillMaxWidth())
+            Text("$value / 50", style = MaterialTheme.typography.bodySmall)
         }
     }
 }
