@@ -22,10 +22,12 @@ import com.fiap.manarolling.ui.ChapterEditorScreen
 import com.fiap.manarolling.ui.CharacterDetailScreen
 import com.fiap.manarolling.ui.CharacterViewModel
 import com.fiap.manarolling.ui.CreateCharacterScreen
+import com.fiap.manarolling.ui.DiceScreen
 import com.fiap.manarolling.ui.EditCharacterScreen
 import com.fiap.manarolling.ui.ListCharactersScreen
 import com.fiap.manarolling.ui.Routes
 import com.fiap.manarolling.ui.StoryScreen
+import com.fiap.manarolling.ui.theme.ManaRollingAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,76 +47,79 @@ class MainActivity : ComponentActivity() {
                         current?.route?.startsWith(Routes.CHAPTER_CREATE) == true ||
                         current?.route?.startsWith(Routes.CHAPTER_EDIT) == true
 
-            Scaffold(
-                bottomBar = {
-                    NavigationBar {
-                        NavigationBarItem(
-                            selected = isCharactersRoute(),
-                            onClick = { nav.navigate(Routes.LIST) { launchSingleTop = true } },
-                            icon = { Icon(Icons.Filled.Groups, contentDescription = null) },
-                            label = { Text("Personagens") }
-                        )
-                        NavigationBarItem(
-                            selected = current?.route == Routes.DICE,
-                            onClick = { nav.navigate(Routes.DICE) { launchSingleTop = true } },
-                            icon = { Icon(Icons.Filled.Casino, contentDescription = null) },
-                            label = { Text("Dado") }
-                        )
+            ManaRollingAppTheme {
+                Scaffold(
+                    bottomBar = {
+                        NavigationBar {
+                            NavigationBarItem(
+                                selected = isCharactersRoute(),
+                                onClick = { nav.navigate(Routes.LIST) { launchSingleTop = true } },
+                                icon = { Icon(Icons.Filled.Groups, contentDescription = null) },
+                                label = { Text("Personagens") }
+                            )
+                            NavigationBarItem(
+                                selected = current?.route == Routes.DICE,
+                                onClick = { nav.navigate(Routes.DICE) { launchSingleTop = true } },
+                                icon = { Icon(Icons.Filled.Casino, contentDescription = null) },
+                                label = { Text("Dado") }
+                            )
+                        }
                     }
-                }
-            ) { pad ->
-                // nav graph
-                NavHost(
-                    navController = nav,
-                    startDestination = Routes.LIST,
-                    modifier = Modifier.padding(pad)
-                ) {
-                    composable(Routes.LIST) { ListCharactersScreen(vm, nav) }
-                    composable(Routes.CREATE) { CreateCharacterScreen(vm, nav) }
-                    composable(
-                        route = "${Routes.DETAIL}/{id}",
-                        arguments = listOf(navArgument("id") { type = NavType.LongType })
-                    ) { backStack ->
-                        val id = backStack.arguments?.getLong("id") ?: 0L
-                        CharacterDetailScreen(vm, id, nav)
-                    }
-                    composable(
-                        route = "${Routes.EDIT}/{id}",
-                        arguments = listOf(navArgument("id") { type = NavType.LongType })
-                    ) { backStack ->
-                        val id = backStack.arguments?.getLong("id") ?: 0L
-                        EditCharacterScreen(vm, id, nav)
-                    }
-                    composable(
-                        route = "${Routes.STORY}/{id}",
-                        arguments = listOf(navArgument("id") { type = NavType.LongType })
-                    ) { backStack ->
-                        val id = backStack.arguments?.getLong("id") ?: 0L
-                        StoryScreen(vm, id, nav)
-                    }
-                    composable(
-                        route = "${Routes.CHAPTER_CREATE}/{id}",
-                        arguments = listOf(navArgument("id") { type = NavType.LongType })
-                    ) { backStack ->
-                        val id = backStack.arguments?.getLong("id") ?: 0L
-                        ChapterEditorScreen(vm, id, nav)
-                    }
-                    composable(
-                        route = "${Routes.CHAPTER_EDIT}/{charId}/{chapterId}",
-                        arguments = listOf(
-                            navArgument("charId") { type = NavType.LongType },
-                            navArgument("chapterId") { type = NavType.LongType }
-                        )
-                    ) { backStack ->
-                        val charId = backStack.arguments?.getLong("charId") ?: 0L
-                        val chapterId = backStack.arguments?.getLong("chapterId") ?: 0L
-                        ChapterEditorScreen(vm, charId, nav, chapterId)
-                    }
+                ) { pad ->
+                    // nav graph
+                    NavHost(
+                        navController = nav,
+                        startDestination = Routes.LIST,
+                        modifier = Modifier.padding(pad)
+                    ) {
+                        composable(Routes.LIST) { ListCharactersScreen(vm, nav) }
+                        composable(Routes.CREATE) { CreateCharacterScreen(vm, nav) }
+                        composable(
+                            route = "${Routes.DETAIL}/{id}",
+                            arguments = listOf(navArgument("id") { type = NavType.LongType })
+                        ) { backStack ->
+                            val id = backStack.arguments?.getLong("id") ?: 0L
+                            CharacterDetailScreen(vm, id, nav)
+                        }
+                        composable(
+                            route = "${Routes.EDIT}/{id}",
+                            arguments = listOf(navArgument("id") { type = NavType.LongType })
+                        ) { backStack ->
+                            val id = backStack.arguments?.getLong("id") ?: 0L
+                            EditCharacterScreen(vm, id, nav)
+                        }
+                        composable(
+                            route = "${Routes.STORY}/{id}",
+                            arguments = listOf(navArgument("id") { type = NavType.LongType })
+                        ) { backStack ->
+                            val id = backStack.arguments?.getLong("id") ?: 0L
+                            StoryScreen(vm, id, nav)
+                        }
+                        composable(
+                            route = "${Routes.CHAPTER_CREATE}/{id}",
+                            arguments = listOf(navArgument("id") { type = NavType.LongType })
+                        ) { backStack ->
+                            val id = backStack.arguments?.getLong("id") ?: 0L
+                            ChapterEditorScreen(vm, id, nav)
+                        }
+                        composable(
+                            route = "${Routes.CHAPTER_EDIT}/{charId}/{chapterId}",
+                            arguments = listOf(
+                                navArgument("charId") { type = NavType.LongType },
+                                navArgument("chapterId") { type = NavType.LongType }
+                            )
+                        ) { backStack ->
+                            val charId = backStack.arguments?.getLong("charId") ?: 0L
+                            val chapterId = backStack.arguments?.getLong("chapterId") ?: 0L
+                            ChapterEditorScreen(vm, charId, nav, chapterId)
+                        }
 
 
-                    composable(Routes.DICE) { DiceScreen() }
+                        composable(Routes.DICE) { DiceScreen() }
+                    }
                 }
             }
+
         }
     }
 }
