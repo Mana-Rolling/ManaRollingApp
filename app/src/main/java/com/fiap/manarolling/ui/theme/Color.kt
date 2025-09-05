@@ -37,7 +37,7 @@ val LightScrim = Color.Black
 // Cores para o Tema Escuro (Exemplo - ajuste conforme sua preferência)
 val DarkPrimary = Color(0xFFBB86FC) // Roxo mais claro para contraste em fundo escuro
 val DarkOnPrimary = Color.Black
-val DarkPrimaryContainer = Color(0xFF3700B3)
+val DarkPrimaryContainer = Color(0xFF8a2be2)
 val DarkOnPrimaryContainer = Color.White
 val DarkSecondary = Color(0xFF03DAC5) // Verde/Ciano similar ao claro
 val DarkOnSecondary = Color.Black
@@ -55,7 +55,7 @@ val DarkBackground = Color(0xFF121212) // Fundo escuro comum
 val DarkOnBackground = Color.White
 val DarkSurface = Color(0xFF121212) // Superfícies escuras (cards, sheets)
 val DarkOnSurface = Color.White
-val DarkSurfaceVariant = Color(0xFF333333) // Uma variante de superfície um pouco mais clara
+val DarkSurfaceVariant = Color(0xFF1E1E1E) // Uma variante de superfície um pouco mais clara
 val DarkOnSurfaceVariant = Color.White
 val DarkOutline = Color(0xFF8A8A8A)
 val DarkInverseOnSurface = Color.Black

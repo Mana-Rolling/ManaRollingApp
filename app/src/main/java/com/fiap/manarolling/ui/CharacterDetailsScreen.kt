@@ -155,7 +155,11 @@ private fun AttributeStat(label: String, value: Int) {
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.titleSmall)
-            LinearProgressIndicator(progress = { bar(value) }, modifier = Modifier.fillMaxWidth())
+            LinearProgressIndicator(
+                progress = { bar(value) },
+                modifier = Modifier.fillMaxWidth(),
+                trackColor = MaterialTheme.colorScheme.outline
+            )
             Text("$value / 50", style = MaterialTheme.typography.bodySmall)
         }
     }

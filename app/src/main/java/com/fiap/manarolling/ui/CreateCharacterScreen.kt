@@ -16,7 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.LocationOn
@@ -88,7 +91,18 @@ fun CreateCharacterScreen(vm: CharacterViewModel, nav: NavController) {
     fun dec(set: (Int)->Unit, v: Int, floor: Int) { if (v > floor) { set(v-1); points++ } }
     fun bar(v: Int) = (v.coerceIn(0, 50)) / 50f
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Criar Personagem") }) }) { pad ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Criar Personagem") },
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
+        }
+    ) { pad ->
         Column(Modifier.padding(pad).verticalScroll(rememberScrollState())) {
 
             // ==== Cabeçalho com Foto (estilo mock): capa larga com cantos arredondados ====
@@ -174,13 +188,32 @@ fun CreateCharacterScreen(vm: CharacterViewModel, nav: NavController) {
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Column(Modifier.weight(1f)) {
-                                Text(title, style = MaterialTheme.typography.titleSmall)
-                                LinearProgressIndicator(progress = { bar(value) }, modifier = Modifier.fillMaxWidth())
-                                Text("$value / 50 (mín: $floor)", style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    title,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                LinearProgressIndicator(
+                                    progress = { bar(value) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    trackColor = MaterialTheme.colorScheme.outline
+                                )
+                                Text(
+                                    "$value / 50 (mín: $floor)",
+                                    style = MaterialTheme.typography.bodySmall)
                             }
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedButton(onClick = { dec(set, value, floor) }, enabled = value > floor) { Text("-") }
-                                Button(onClick = { inc(set, value) }, enabled = points > 0 && value < 50) { Text("+") }
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { dec(set, value, floor) },
+                                    enabled = value > floor
+                                ) { Text("-") }
+                                Button(
+                                    onClick = {
+                                        inc(set, value)
+                                    },
+                                    enabled = points > 0 && value < 50
+                                ) { Text("+") }
                             }
                         }
                     }

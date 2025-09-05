@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -57,19 +58,20 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(57.dp), // Altura do ConstraintLayout - (2 * padding de 16dp) / 2 para alinhar = 89 - 32 = 57
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(top = 20.dp)
+                    .height(70.dp)// Altura do ConstraintLayout - (2 * padding de 16dp) / 2 para alinhar = 89 - 32 = 57
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.mr_logo),
                     contentDescription = "Logo Mana Rolling",
                     modifier = Modifier.size(59.dp),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primaryContainer)
                 )
                 Text(
                     text = "Mana Rolling",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = MaterialTheme.colorScheme.primaryContainer,
                     fontSize = 20.sp,
                     fontFamily = pixelifySansFamily,
                     modifier = Modifier.padding(start = 4.dp)
@@ -86,7 +88,8 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
             Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Filled.Groups, contentDescription = null)
-                    Spacer(Modifier.height(8.dp)); Text("Nenhum personagem", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(8.dp)); Text("Nenhum personagem",
+                    style = MaterialTheme.typography.titleMedium)
                     Text("Toque no + para criar", style = MaterialTheme.typography.bodyMedium)
                 }
             }
@@ -94,10 +97,15 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
             LazyColumn(Modifier.padding(pad).padding(12.dp)) {
                 items(list) { c ->
                     ElevatedCard(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(bottom = 10.dp)
                             .clickable { nav.navigate("${Routes.DETAIL}/${c.id}") }
                     ) {
-                        Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
 
                             // Thumb redonda
                             if (c.photoUri != null) {
@@ -113,7 +121,10 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
                                     modifier = Modifier.size(56.dp).clip(CircleShape),
                                     color = MaterialTheme.colorScheme.surfaceVariant
                                 ) {
-                                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Box(
+                                        Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
                                         Icon(Icons.Filled.Person, contentDescription = null)
                                     }
                                 }
@@ -121,11 +132,20 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
 
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text("Classe: ${c.clazz.ifBlank { "-" }} • Nível ${c.level}", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    c.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1, overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    "Classe: ${c.clazz.ifBlank { "-" }} • Nível ${c.level}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             }
                             Spacer(Modifier.width(12.dp))
-                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null)
                         }
                     }
                 }
