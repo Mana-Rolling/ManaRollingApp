@@ -10,4 +10,6 @@ object Routes {
     const val CHAPTER_EDIT = "chapterEdit"
 
     const val EDIT = "edit"
+
+    const val DICE = "dice"
 }
