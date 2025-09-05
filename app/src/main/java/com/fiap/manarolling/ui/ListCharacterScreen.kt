@@ -52,8 +52,7 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
     val list = vm.characters.collectAsState().value
 
     Scaffold(
-        modifier = Modifier
-            .background(backgroundColor),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Row(
                 modifier = Modifier
@@ -66,11 +65,11 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
                     painter = painterResource(id = R.drawable.mr_logo),
                     contentDescription = "Logo Mana Rolling",
                     modifier = Modifier.size(59.dp),
-                    colorFilter = ColorFilter.tint(accentColor)
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                 )
                 Text(
                     text = "Mana Rolling",
-                    color = primaryTextColor,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 20.sp,
                     fontFamily = pixelifySansFamily,
                     modifier = Modifier.padding(start = 4.dp)
