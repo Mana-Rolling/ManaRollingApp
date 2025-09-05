@@ -1,6 +1,8 @@
 package com.fiap.manarolling.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -9,13 +11,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.fiap.manarolling.R
 import com.fiap.manarolling.model.Character
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
+fun CharacterDetailScreen(
+    vm: CharacterViewModel,
+    id: Long,
+    nav: NavController
+) {
     val c: Character? = vm.getCharacter(id)
 
     Scaffold(
@@ -30,9 +39,12 @@ fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) 
                 actions = {
                     if (c != null) {
                         IconButton(onClick = { nav.navigate("${Routes.EDIT}/$id") }) {
-                            Icon(Icons.Filled.Edit, contentDescription = "Editar personagem")
+                            Icon(Icons.Filled.Edit, contentDescription = "Editar")
                         }
-                        IconButton(onClick = { vm.deleteCharacter(c.id); nav.popBackStack() }) {
+                        IconButton(onClick = {
+                            vm.deleteCharacter(c.id)
+                            nav.popBackStack()
+                        }) {
                             Icon(Icons.Filled.Delete, contentDescription = "Excluir")
                         }
                     }
@@ -48,25 +60,68 @@ fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) 
         }
     ) { pad ->
         if (c == null) {
-            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Personagem não encontrado")
-            }
+            Box(
+                Modifier.padding(pad).fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { Text("Personagem não encontrado") }
         } else {
-            Column(Modifier.padding(pad).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("${c.avatarEmoji} ${c.name}", style = MaterialTheme.typography.headlineSmall)
-                ElevatedCard(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Região: ${c.region}")
-                        Text("Idade: ${c.age}")
-                        Text("Classe: ${c.clazz}")
-                        Text("Nível: ${c.level}")
+            // ✅ Agora é rolável
+            LazyColumn(
+                modifier = Modifier
+                    .padding(pad)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp, end = 16.dp, top = 0.dp, bottom = 96.dp // espaço pro FAB
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Capa
+                item {
+                    AsyncImage(
+                        model = c.photoUri ?: R.drawable.default_character,
+                        contentDescription = "Foto do personagem",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .padding(start = (-16).dp, end = (-16).dp) // estica a capa de borda a borda
+                    )
+                }
+
+                // Nome
+                item {
+                    Text(c.name, style = MaterialTheme.typography.headlineSmall)
+                }
+
+                // Informações básicas
+                item {
+                    ElevatedCard(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("Região: ${c.region}")
+                            Text("Idade: ${c.age}")
+                            Text("Classe: ${c.clazz}")
+                            Text("Nível: ${c.level}")
+                        }
                     }
                 }
-                Text("Atributos", style = MaterialTheme.typography.titleMedium)
-                AttributeStat("Inteligência", c.attributes.intelligence)
-                AttributeStat("Destreza", c.attributes.dexterity)
-                AttributeStat("Força", c.attributes.strength)
-                Text("Pontos restantes: ${c.availablePoints}")
+
+                // Atributos
+                item { Text("Atributos", style = MaterialTheme.typography.titleMedium) }
+
+                items(
+                    listOf(
+                        "Inteligência" to c.attributes.intelligence,
+                        "Destreza"     to c.attributes.dexterity,
+                        "Força"        to c.attributes.strength,
+                        "Agilidade"    to c.attributes.agility,
+                        "Carisma"      to c.attributes.charisma
+                    )
+                ) { (label, value) ->
+                    AttributeStat(label, value)
+                }
+
+                // Pontos restantes
+                item { Text("Pontos restantes: ${c.availablePoints}") }
             }
         }
     }
@@ -74,11 +129,12 @@ fun CharacterDetailScreen(vm: CharacterViewModel, id: Long, nav: NavController) 
 
 @Composable
 private fun AttributeStat(label: String, value: Int) {
+    fun bar(v: Int) = (v.coerceIn(0, 50)) / 50f
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.titleSmall)
-            LinearProgressIndicator(progress = { value / 20f }, modifier = Modifier.fillMaxWidth())
-            Text("$value / 20", style = MaterialTheme.typography.bodySmall)
+            LinearProgressIndicator(progress = { bar(value) }, modifier = Modifier.fillMaxWidth())
+            Text("$value / 50", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

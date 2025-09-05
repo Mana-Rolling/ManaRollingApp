@@ -1,181 +1,212 @@
 package com.fiap.manarolling.ui
 
+import coil.compose.AsyncImage
+import com.fiap.manarolling.R
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Cake
-import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Save
-import androidx.compose.material.icons.filled.SportsMartialArts
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.fiap.manarolling.model.Attributes
-import com.fiap.manarolling.model.Character
+import com.fiap.manarolling.model.ClassPresets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditCharacterScreen(
-    vm: CharacterViewModel,
-    id: Long,
-    nav: NavController
-) {
+fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
     val current = vm.getCharacter(id)
     if (current == null) {
         Scaffold(topBar = { TopAppBar(title = { Text("Editar") }) }) { pad ->
-            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Personagem não encontrado")
-            }
+            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) { Text("Personagem não encontrado") }
         }
         return
     }
 
+    val context = LocalContext.current
+    val defaultResUri = remember { "android.resource://${context.packageName}/drawable/default_character" }
+
+
     var name by remember(current.id) { mutableStateOf(current.name) }
     var region by remember(current.id) { mutableStateOf(current.region) }
     var age by remember(current.id) { mutableStateOf(current.age.toString()) }
-    var clazz by remember(current.id) { mutableStateOf(current.clazz) }
     var level by remember(current.id) { mutableStateOf(current.level.toString()) }
 
-    val emojiOptions = listOf("🧙","🗡️","🛡️","🏹","🧝","🐺")
-    var avatarEmoji by remember(current.id) { mutableStateOf(current.avatarEmoji.ifBlank { emojiOptions.first() }) }
-    var emojiExpanded by remember { mutableStateOf(false) }
+    var photoUri by remember(current.id) { mutableStateOf(current.photoUri) }
+    val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let {
+            photoUri = it.toString()
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Throwable) {}
+        }
+    }
+
+    val classOptions = ClassPresets.options
+    var clazz by remember(current.id) { mutableStateOf(if (current.clazz in classOptions) current.clazz else classOptions.first()) }
+    var clazzExpanded by remember { mutableStateOf(false) }
 
     var intel by remember(current.id) { mutableStateOf(current.attributes.intelligence) }
     var dex by remember(current.id) { mutableStateOf(current.attributes.dexterity) }
     var str by remember(current.id) { mutableStateOf(current.attributes.strength) }
-    var points by remember(current.id) { mutableStateOf(current.availablePoints) }
+    var agi by remember(current.id) { mutableStateOf(current.attributes.agility) }
+    var cha by remember(current.id) { mutableStateOf(current.attributes.charisma) }
 
-    fun inc(set: (Int)->Unit, v: Int) { if (points > 0 && v < 20) { set(v+1); points-- } }
-    fun dec(set: (Int)->Unit, v: Int) { if (v > 0) { set(v-1); points++ } }
-    fun attrBar(v: Int) = v / 20f
+    var points by remember(current.id) { mutableStateOf(current.availablePoints) }
+    val base by remember(clazz) { mutableStateOf(ClassPresets.base[clazz] ?: Attributes()) }
+
+    LaunchedEffect(clazz) {
+        ClassPresets.base[clazz]?.let { b ->
+            intel = b.intelligence; dex = b.dexterity; str = b.strength; agi = b.agility; cha = b.charisma
+        }
+        points = 10
+    }
+
+    fun inc(set: (Int)->Unit, v: Int) { if (points > 0 && v < 50) { set(v+1); points-- } }
+    fun dec(set: (Int)->Unit, v: Int, floor: Int) { if (v > floor) { set(v-1); points++ } }
+    fun bar(v: Int) = (v.coerceIn(0, 50)) / 50f
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Editar Personagem") },
-                navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-                    }
-                }
+                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                } }
             )
         }
     ) { pad ->
-        Column(
-            Modifier.padding(pad).padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Avatar + Nome
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ExposedDropdownMenuBox(
-                    expanded = emojiExpanded,
-                    onExpandedChange = { emojiExpanded = !emojiExpanded }
+        Column(Modifier.padding(pad).verticalScroll(rememberScrollState())) {
+
+
+            ElevatedCard(Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(20.dp)) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clickable {
+                            pickMedia.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    OutlinedTextField(
-                        value = avatarEmoji,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Avatar") },
-                        leadingIcon = { Icon(Icons.Filled.Badge, null) },
-                        modifier = Modifier.menuAnchor().width(110.dp)
+                    AsyncImage(
+                        model = photoUri ?: R.drawable.default_character,
+                        contentDescription = "Foto do personagem",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    ExposedDropdownMenu(expanded = emojiExpanded, onDismissRequest = { emojiExpanded = false }) {
-                        emojiOptions.forEach { e ->
-                            DropdownMenuItem(text = { Text(e) }, onClick = { avatarEmoji = e; emojiExpanded = false })
-                        }
-                    }
                 }
-                Spacer(Modifier.width(12.dp))
+            }
+
+            Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name, onValueChange = { name = it },
                     label = { Text("Nome") }, singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
+                OutlinedTextField(
+                    value = region, onValueChange = { region = it },
+                    label = { Text("Região") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = age, onValueChange = { age = it.filter { ch -> ch.isDigit() } },
+                    label = { Text("Idade") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            OutlinedTextField(
-                value = region, onValueChange = { region = it },
-                label = { Text("Região") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = age, onValueChange = { age = it.filter { ch -> ch.isDigit() } },
-                label = { Text("Idade") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = clazz, onValueChange = { clazz = it },
-                label = { Text("Classe") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = level, onValueChange = { level = it.filter { ch -> ch.isDigit() } },
-                label = { Text("Nível") }, singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth()
-            )
+                ExposedDropdownMenuBox(expanded = clazzExpanded, onExpandedChange = { clazzExpanded = !clazzExpanded }) {
+                    OutlinedTextField(
+                        value = clazz, onValueChange = {}, readOnly = true, label = { Text("Classe") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = clazzExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(expanded = clazzExpanded, onDismissRequest = { clazzExpanded = false }) {
+                        classOptions.forEach { opt -> DropdownMenuItem(text = { Text(opt) }, onClick = { clazz = opt; clazzExpanded = false }) }
+                    }
+                }
 
-            Text("Pontos disponíveis: $points", style = MaterialTheme.typography.titleMedium)
+                OutlinedTextField(
+                    value = level, onValueChange = { level = it.filter { ch -> ch.isDigit() } },
+                    label = { Text("Nível") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            @Composable
-            fun RowAttr(title: String, value: Int, set: (Int)->Unit) {
-                ElevatedCard(Modifier.fillMaxWidth()) {
-                    Row(Modifier.fillMaxWidth().padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Column(Modifier.weight(1f)) {
-                            Text(title, style = MaterialTheme.typography.titleSmall)
-                            LinearProgressIndicator(progress = { attrBar(value) }, modifier = Modifier.fillMaxWidth())
-                            Text("$value / 20", style = MaterialTheme.typography.bodySmall)
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            OutlinedButton(onClick = { dec(set, value) }) { Text("-") }
-                            Spacer(Modifier.height(6.dp))
-                            Button(onClick = { inc(set, value) }) { Text("+") }
+                Text("Pontos disponíveis: $points", style = MaterialTheme.typography.titleMedium)
+
+                @Composable
+                fun RowAttr(title: String, value: Int, floor: Int, set: (Int)->Unit) {
+                    ElevatedCard(Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                Text(title, style = MaterialTheme.typography.titleSmall)
+                                LinearProgressIndicator(progress = { bar(value) }, modifier = Modifier.fillMaxWidth())
+                                Text("$value / 50 (mín: $floor)", style = MaterialTheme.typography.bodySmall)
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedButton(onClick = { dec(set, value, floor) }, enabled = value > floor) { Text("-") }
+                                Button(onClick = { inc(set, value) }, enabled = points > 0 && value < 50) { Text("+") }
+                            }
                         }
                     }
                 }
-            }
 
-            RowAttr("Inteligência", intel) { intel = it }
-            RowAttr("Destreza", dex) { dex = it }
-            RowAttr("Força", str) { str = it }
+                RowAttr("Inteligência", intel, base.intelligence) { intel = it }
+                RowAttr("Destreza",     dex,   base.dexterity)    { dex = it }
+                RowAttr("Força",        str,   base.strength)     { str = it }
+                RowAttr("Agilidade",    agi,   base.agility)      { agi = it }
+                RowAttr("Carisma",      cha,   base.charisma)     { cha = it }
 
-            Spacer(Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    val updated = current.copy(
-                        name = name.trim(),
-                        region = region.trim(),
-                        age = age.toIntOrNull() ?: 0,
-                        clazz = clazz.trim(),
-                        level = level.toIntOrNull() ?: current.level,
-                        availablePoints = points,
-                        avatarEmoji = avatarEmoji,
-                        attributes = Attributes(intel, dex, str)
-                    )
-                    vm.updateCharacter(updated)
-                    nav.popBackStack() // retorna para o detalhe
-                },
-                enabled = name.isNotBlank(),
-                modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) {
-                Icon(Icons.Filled.Save, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Salvar alterações")
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        val updated = current.copy(
+                            name = name.trim(),
+                            region = region.trim(),
+                            age = age.toIntOrNull() ?: 0,
+                            clazz = clazz.trim(),
+                            level = level.toIntOrNull() ?: current.level,
+                            availablePoints = points,
+                            photoUri = (photoUri ?: defaultResUri),
+                            attributes = Attributes(intel, dex, str, agi, cha)
+                        )
+                        vm.updateCharacter(updated)
+                        nav.popBackStack()
+                    },
+                    enabled = name.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Icon(Icons.Filled.Save, contentDescription = null)
+                    Spacer(Modifier.width(8.dp)); Text("Salvar alterações")
+                }
             }
         }
     }
