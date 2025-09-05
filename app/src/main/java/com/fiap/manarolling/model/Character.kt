@@ -20,7 +20,9 @@ data class Character(
     var clazz: String = "",
     var level: Int = 1,
     var availablePoints: Int = 10,
-    var avatarEmoji: String = "🧙",
+
+    var photoUri: String? = null,
+
     var attributes: Attributes = Attributes(),
     var story: Story = Story()
 )
