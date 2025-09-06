@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Image
@@ -110,7 +111,18 @@ fun CreateCharacterScreen(
     }
     fun bar(v: Int) = (v.coerceIn(0, 50)) / 50f
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Criar Personagem") }) }) { pad ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Criar Personagem") },
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
+        }
+    ) { pad ->
         Column(
             Modifier
                 .padding(pad)
@@ -257,7 +269,8 @@ fun CreateCharacterScreen(
                                 Text(title, style = MaterialTheme.typography.titleSmall)
                                 LinearProgressIndicator(
                                     progress = { bar(value) },
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth(),
+                                    trackColor = MaterialTheme.colorScheme.outline
                                 )
                                 Text(
                                     "$value / 50 (mín: $floor)",
