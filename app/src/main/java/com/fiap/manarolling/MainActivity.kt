@@ -50,18 +50,21 @@ class MainActivity : ComponentActivity() {
             ManaRollingAppTheme {
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
+                        NavigationBar(
+                        ) {
                             NavigationBarItem(
                                 selected = isCharactersRoute(),
                                 onClick = { nav.navigate(Routes.LIST) { launchSingleTop = true } },
                                 icon = { Icon(Icons.Filled.Groups, contentDescription = null) },
-                                label = { Text("Personagens") }
+                                label = { Text("Personagens") },
+                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
                             )
                             NavigationBarItem(
                                 selected = current?.route == Routes.DICE,
                                 onClick = { nav.navigate(Routes.DICE) { launchSingleTop = true } },
                                 icon = { Icon(Icons.Filled.Casino, contentDescription = null) },
-                                label = { Text("Dado") }
+                                label = { Text("Dado") },
+                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
                             )
                         }
                     }

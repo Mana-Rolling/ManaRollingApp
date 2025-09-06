@@ -60,7 +60,7 @@ fun DiceScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Rolador de Dados") },
+                title = { Text("Rolagem de Dados") },
                 navigationIcon = { Icon(Icons.Filled.Casino, contentDescription = null) }
             )
         }

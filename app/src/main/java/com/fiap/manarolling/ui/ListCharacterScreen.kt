@@ -79,7 +79,10 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { nav.navigate(Routes.CREATE) }) {
+            FloatingActionButton(
+                onClick = { nav.navigate(Routes.CREATE) },
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            ) {
                 Icon(Icons.Filled.Add, contentDescription = "Criar")
             }
         },
