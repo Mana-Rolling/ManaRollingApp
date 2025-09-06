@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
                                     else -> false
                                 }
                             NavigationBarItem(
-                                selected = isCharactersRoute(),
+                                selected = selectedCharacters,
                                 colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer),
                                 onClick = {
                                     when (role) {

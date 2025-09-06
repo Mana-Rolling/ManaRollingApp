@@ -90,15 +90,18 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
         topBar = {
             TopAppBar(
                 title = { Text("Editar Personagem") },
-                navigationIcon = { IconButton(onClick = { nav.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-                } }
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
             )
         }
     ) { pad ->
-        Column(Modifier.padding(pad).verticalScroll(rememberScrollState())) {
-
-
+        Column(
+            Modifier.padding(pad)
+                .verticalScroll(rememberScrollState())
+        ) {
             ElevatedCard(Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(20.dp)) {
                 Box(
                     Modifier
@@ -140,13 +143,18 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                ExposedDropdownMenuBox(expanded = clazzExpanded, onExpandedChange = { clazzExpanded = !clazzExpanded }) {
+                ExposedDropdownMenuBox(
+                    expanded = clazzExpanded,
+                    onExpandedChange = { clazzExpanded = !clazzExpanded }
+                ) {
                     OutlinedTextField(
                         value = clazz, onValueChange = {}, readOnly = true, label = { Text("Classe") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = clazzExpanded) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                    ExposedDropdownMenu(expanded = clazzExpanded, onDismissRequest = { clazzExpanded = false }) {
+                    ExposedDropdownMenu(
+                        expanded = clazzExpanded,
+                        onDismissRequest = { clazzExpanded = false }) {
                         classOptions.forEach { opt -> DropdownMenuItem(text = { Text(opt) }, onClick = { clazz = opt; clazzExpanded = false }) }
                     }
                 }
@@ -162,13 +170,26 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
 
                 @Composable
                 fun RowAttr(title: String, value: Int, floor: Int, set: (Int)->Unit) {
-                    ElevatedCard(Modifier.fillMaxWidth()) {
-                        Row(Modifier.fillMaxWidth().padding(12.dp),
+                    ElevatedCard(
+                        Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Column(Modifier.weight(1f)) {
-                                Text(title, style = MaterialTheme.typography.titleSmall)
-                                LinearProgressIndicator(progress = { bar(value) }, modifier = Modifier.fillMaxWidth())
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Column(
+                                Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    title,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                                LinearProgressIndicator(
+                                    progress = { bar(value) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    trackColor = MaterialTheme.colorScheme.outline
+                                )
                                 Text("$value / 50 (mín: $floor)", style = MaterialTheme.typography.bodySmall)
                             }
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

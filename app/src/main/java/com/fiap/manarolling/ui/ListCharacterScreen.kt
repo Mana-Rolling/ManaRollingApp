@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Groups
@@ -35,17 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 
-val pixelifySansFamily = FontFamily(
-    Font(R.font.pixelify_sans_medium, FontWeight.Medium)
-    // Adicione outras variações de peso/estilo se necessário
-)
 
-val backgroundColor = Color(0xFF0D0D0D)
-val primaryTextColor = Color.Black
-val hintColor = Color(0xFFAAAAAA)
-val accentColor = Color(0xFFA78BFA)
-val cardButtonBgColor = Color(0xFF2D2D2D)
-val bottomMenuBgColor = Color(0xFF1A1A1A)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,28 +46,14 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp)
-                    .height(70.dp)// Altura do ConstraintLayout - (2 * padding de 16dp) / 2 para alinhar = 89 - 32 = 57
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.mr_logo),
-                    contentDescription = "Logo Mana Rolling",
-                    modifier = Modifier.size(59.dp),
-                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primaryContainer)
-                )
-                Text(
-                    text = "Mana Rolling",
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    fontSize = 20.sp,
-                    fontFamily = pixelifySansFamily,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-            }
+            TopAppBar(
+                title = { Text("Lista de Jogadores") },
+                navigationIcon = {
+                    IconButton(onClick = { nav.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                    }
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
