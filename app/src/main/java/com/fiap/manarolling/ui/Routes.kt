@@ -1,6 +1,9 @@
 package com.fiap.manarolling.ui
 
 object Routes {
+
+    const val SPLASH = "splash"
+    const val ROLE_SELECT = "roleSelect"
     const val LIST = "list"
     const val CREATE = "create"
     const val DETAIL = "detail"
