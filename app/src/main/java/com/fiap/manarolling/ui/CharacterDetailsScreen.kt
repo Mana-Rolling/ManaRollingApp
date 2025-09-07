@@ -5,8 +5,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -65,17 +67,14 @@ fun CharacterDetailScreen(
                 contentAlignment = Alignment.Center
             ) { Text("Personagem não encontrado") }
         } else {
-            // ✅ Agora é rolável
             LazyColumn(
                 modifier = Modifier
                     .padding(pad)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp, end = 16.dp, top = 0.dp, bottom = 96.dp // espaço pro FAB
-                ),
+                contentPadding = PaddingValues(bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Capa
+                // Capa: borda a borda
                 item {
                     AsyncImage(
                         model = c.photoUri ?: R.drawable.default_character,
@@ -84,19 +83,29 @@ fun CharacterDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(220.dp)
-                            .padding(start = (-16).dp, end = (-16).dp) // estica a capa de borda a borda
                     )
                 }
 
                 // Nome
                 item {
-                    Text(c.name, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        c.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
 
-                // Informações básicas
+
                 item {
-                    ElevatedCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ElevatedCard(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Column(
+                            Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
                             Text("Região: ${c.region}")
                             Text("Idade: ${c.age}")
                             Text("Classe: ${c.clazz}")
@@ -106,7 +115,13 @@ fun CharacterDetailScreen(
                 }
 
                 // Atributos
-                item { Text("Atributos", style = MaterialTheme.typography.titleMedium) }
+                item {
+                    Text(
+                        "Atributos",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
 
                 items(
                     listOf(
@@ -117,11 +132,18 @@ fun CharacterDetailScreen(
                         "Carisma"      to c.attributes.charisma
                     )
                 ) { (label, value) ->
-                    AttributeStat(label, value)
+                    Box(Modifier.padding(horizontal = 16.dp)) {
+                        AttributeStat(label, value)
+                    }
                 }
 
-                // Pontos restantes
-                item { Text("Pontos restantes: ${c.availablePoints}") }
+
+                item {
+                    Text(
+                        "Pontos restantes: ${c.availablePoints}",
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
             }
         }
     }
@@ -133,7 +155,11 @@ private fun AttributeStat(label: String, value: Int) {
     ElevatedCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Text(label, style = MaterialTheme.typography.titleSmall)
-            LinearProgressIndicator(progress = { bar(value) }, modifier = Modifier.fillMaxWidth())
+            LinearProgressIndicator(
+                progress = { bar(value) },
+                modifier = Modifier.fillMaxWidth(),
+                trackColor = MaterialTheme.colorScheme.outline
+            )
             Text("$value / 50", style = MaterialTheme.typography.bodySmall)
         }
     }

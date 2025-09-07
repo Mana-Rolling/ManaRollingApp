@@ -1,6 +1,9 @@
 package com.fiap.manarolling.ui
 
 object Routes {
+
+    const val SPLASH = "splash"
+    const val ROLE_SELECT = "roleSelect"
     const val LIST = "list"
     const val CREATE = "create"
     const val DETAIL = "detail"
@@ -10,4 +13,6 @@ object Routes {
     const val CHAPTER_EDIT = "chapterEdit"
 
     const val EDIT = "edit"
+
+    const val DICE = "dice"
 }
