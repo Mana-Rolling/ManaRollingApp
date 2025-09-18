@@ -49,7 +49,7 @@ fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
             TopAppBar(
                 title = { Text("Lista de Jogadores") },
                 navigationIcon = {
-                    IconButton(onClick = { nav.popBackStack() }) {
+                    IconButton(onClick = { nav.navigate(Routes.ROLE_SELECT) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                 }
