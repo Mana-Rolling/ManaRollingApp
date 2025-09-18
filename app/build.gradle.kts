@@ -4,8 +4,8 @@ plugins {
 
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
 
-
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -93,4 +93,9 @@ dependencies {
 
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+
+    implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-database-ktx:20.2.2")
+    implementation("com.google.firebase:firebase-auth-ktx:22.0.0")
 }

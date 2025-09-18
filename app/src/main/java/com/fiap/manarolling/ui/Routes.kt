@@ -15,4 +15,7 @@ object Routes {
     const val EDIT = "edit"
 
     const val DICE = "dice"
+
+    const val LOBBY = "lobby"
+    const val MULTIPLAYER = "multiplayer"
 }
