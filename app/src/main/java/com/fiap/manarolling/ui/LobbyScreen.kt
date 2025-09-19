@@ -1,5 +1,6 @@
 package com.fiap.manarolling.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.multiplayer.PlayerInfo
 
@@ -17,7 +19,7 @@ import com.fiap.manarolling.multiplayer.PlayerInfo
 fun LobbyScreen(
     onCreated: (sessionId: String) -> Unit,
     onJoined: (sessionId: String) -> Unit,
-    vm: MultiplayerViewModel = viewModel()
+    vm: MultiplayerViewModel = viewModel(),
 ) {
     var name by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
@@ -25,15 +27,22 @@ fun LobbyScreen(
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(text = "Seu nome")
-        OutlinedTextField(value = name, onValueChange = { name = it }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            modifier = Modifier.fillMaxWidth())
 
-        Button(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), onClick = {
+        Button(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            onClick = {
             if (name.isBlank()) {
                 message = "Digite um nome"
                 return@Button
             }
             vm.createSession(masterId = name, masterName = name) { sessionId, error ->
                 if (sessionId != null) {
+
+                    Log.d("CADE_ESSE_ID", sessionId)
                     onCreated(sessionId)
                 } else {
                     message = "Erro ao criar sala: ${'$'}{error?.message}"
@@ -60,7 +69,8 @@ fun LobbyScreen(
         }
 
         if (message.isNotBlank()) {
-            Text(modifier = Modifier.padding(top = 12.dp), text = message)
+//            Text(modifier = Modifier.padding(top = 12.dp), text = message)
+            Log.d("CADE_ESSE_ID", message)
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.fiap.manarolling
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -20,6 +21,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import androidx.navigation.navArgument
 import com.fiap.manarolling.ui.ChapterEditorScreen
 import com.fiap.manarolling.ui.CharacterDetailScreen
@@ -86,12 +89,19 @@ class MainActivity : ComponentActivity() {
                                     if (role == UserRole.PLAYER) Icon(
                                         Icons.Filled.Person,
                                         null
-                                    ) else Icon(Icons.Filled.Groups, null)
+                                    ) else Icon(Icons.Filled.Person, null)
                                 },
                                 label = {
                                     Text(
                                         if (role == UserRole.PLAYER) "Meu Personagem" else "Personagens")
                                 }
+                            )
+                            NavigationBarItem(
+                                selected = current?.route == Routes.LOBBY,
+                                onClick = { nav.navigate(Routes.LOBBY) { launchSingleTop = true } },
+                                icon = { Icon(Icons.Filled.Groups, contentDescription = null) },
+                                label = { Text("Multiplayer") },
+                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
                             )
                             NavigationBarItem(
                                 selected = current?.route == Routes.DICE,
@@ -179,10 +189,43 @@ class MainActivity : ComponentActivity() {
 
                         // dado
                         composable(Routes.DICE) { DiceScreen() }
+
+                        composable(Routes.LOBBY) {
+                            LobbyScreen(
+                                onCreated = { sessionId ->
+                                    // quando o mestre criar sala → ir para MULTIPLAYER
+                                    nav.navigate("${Routes.MULTIPLAYER}/${sessionId}/{playerId}")
+                                },
+                                onJoined = { sessionId ->
+                                    // quando o jogador entrar na sala → ir para MULTIPLAYER
+                                    nav.navigate("${Routes.MULTIPLAYER}/${sessionId}/{playerId}")
+                                }
+                            )
+                        }
+
+                        // rota Multiplayer com parâmetros
+                        composable(
+                            route = "${Routes.MULTIPLAYER}/{sessionId}/{playerId}",
+                            arguments = listOf(
+                                navArgument("sessionId") { type = NavType.StringType },
+                                navArgument("playerId") { type = NavType.StringType }
+                            )
+                        ) { backStackEntry ->
+                            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
+                            val playerId = backStackEntry.arguments?.getString("playerId") ?: ""
+                            Log.d("aqui oh", "sessionId: $sessionId")
+
+                            MultiplayerScreen(
+                                sessionId = sessionId,
+                                playerId = playerId,
+                                onExit = {
+                                    nav.popBackStack(Routes.LOBBY, inclusive = false)
+                                }
+                            )
+                        }
                     }
                 }
             }
-
         }
     }
 }
