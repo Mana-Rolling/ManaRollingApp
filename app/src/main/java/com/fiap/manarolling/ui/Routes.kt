@@ -18,4 +18,6 @@ object Routes {
 
     const val LOBBY = "lobby"
     const val MULTIPLAYER = "multiplayer"
+    const val SESSION_CHAR_DETAILS = "session_char/{sessionId}/{ownerUid}/{charId}"
+    const val OFFLINE = "offline"
 }

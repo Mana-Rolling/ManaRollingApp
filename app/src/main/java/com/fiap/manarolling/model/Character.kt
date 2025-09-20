@@ -24,5 +24,6 @@ data class Character(
     var photoUri: String? = null,
 
     var attributes: Attributes = Attributes(),
-    var story: Story = Story()
+    var story: Story = Story(),
+    val ownerUid: String = ""
 )

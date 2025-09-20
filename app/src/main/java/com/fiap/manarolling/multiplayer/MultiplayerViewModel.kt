@@ -1,59 +1,55 @@
 package com.fiap.manarolling.multiplayer
 
+import com.fiap.manarolling.model.Character as MRCharacter
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 class MultiplayerViewModel : ViewModel() {
 
     private val repo = MultiplayerRepository()
 
+    /* ===== UID (auth anônima) ===== */
+    private val _myUid = MutableStateFlow(Firebase.auth.currentUser?.uid)
+    val myUid: StateFlow<String?> = _myUid
+
+    private fun ensureUid(then: (String) -> Unit, onError: ((Exception) -> Unit)? = null) {
+        val curr = _myUid.value
+        if (curr != null) return then(curr)
+        Firebase.auth.signInAnonymously()
+            .addOnSuccessListener { res -> res.user?.uid?.let { _myUid.value = it; then(it) } }
+            .addOnFailureListener { onError?.invoke(it) }
+    }
+
+    /* ===== Sessão ===== */
     private val _sessionState = MutableStateFlow<GameSession?>(null)
     val sessionState: StateFlow<GameSession?> = _sessionState
 
-    fun createSession(masterId: String, masterName: String, onResult: (String?, Exception?) -> Unit) {
-        repo.createSession(masterId, masterName, onResult)
+    fun createSession(masterName: String, callback: (String?, Exception?) -> Unit) {
+        ensureUid({ uid -> repo.createSession(uid, masterName, callback) }, { callback(null, it) })
     }
 
-    fun joinSession(sessionId: String, player: PlayerInfo, onResult: (Boolean, Exception?) -> Unit) {
-        repo.joinSession(sessionId, player, onResult)
+    fun joinWithCharacter(sessionId: String, playerName: String, character: MRCharacter, callback: (Boolean, Exception?) -> Unit) {
+        ensureUid({ uid -> repo.joinSessionWithCharacter(sessionId, uid, playerName, character, callback) },
+            { callback(false, it) })
     }
-
-    private var listener: ValueEventListener? = null
 
     fun startListening(sessionId: String) {
-        listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val session = snapshot.getValue(GameSession::class.java)
-                viewModelScope.launch {
-                    _sessionState.value = session
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // log or handle error
-            }
-        }
-        repo.listenSession(sessionId, listener!!)
+        repo.startListening(sessionId) { _sessionState.value = it }
     }
+    fun stopListening(sessionId: String) = repo.removeSessionListener(sessionId)
 
-    fun stopListening(sessionId: String) {
-        repo.removeListener(sessionId)
-        listener = null
-    }
+    /* ===== Personagens da sessão ===== */
+    private val _sessionCharacters = MutableStateFlow<Map<String, List<MRCharacter>>>(emptyMap())
+    val sessionCharacters: StateFlow<Map<String, List<MRCharacter>>> = _sessionCharacters
 
-    fun updateState(sessionId: String, state: Map<String, Any>, onComplete: ((Boolean) -> Unit)? = null) {
-        repo.updateState(sessionId, state) { success, _ ->
-            onComplete?.invoke(success)
-        }
+    fun startCharactersListener(sessionId: String) {
+        repo.listenCharacters(sessionId) { _sessionCharacters.value = it }
     }
+    fun stopCharactersListener(sessionId: String) = repo.removeCharactersListener(sessionId)
 
-    fun leaveSession(sessionId: String, playerId: String, onComplete: ((Boolean) -> Unit)? = null) {
-        repo.leaveSession(sessionId, playerId) { success, _ -> onComplete?.invoke(success) }
-    }
+    /* util */
+    fun isMaster(): Boolean = _sessionState.value?.masterId == _myUid.value
 }

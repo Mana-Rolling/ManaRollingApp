@@ -1,7 +1,5 @@
 package com.fiap.manarolling.ui
 
-import coil.compose.AsyncImage
-import com.fiap.manarolling.R
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -27,23 +25,32 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.fiap.manarolling.R
 import com.fiap.manarolling.model.Attributes
 import com.fiap.manarolling.model.ClassPresets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
+fun EditCharacterScreen(
+    vm: CharacterViewModel,
+    id: Long,
+    nav: NavController
+) {
     val current = vm.getCharacter(id)
     if (current == null) {
         Scaffold(topBar = { TopAppBar(title = { Text("Editar") }) }) { pad ->
-            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) { Text("Personagem não encontrado") }
+            Box(
+                Modifier.padding(pad).fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) { Text("Personagem não encontrado") }
         }
         return
     }
 
     val context = LocalContext.current
-    val defaultResUri = remember { "android.resource://${context.packageName}/drawable/default_character" }
-
+    val defaultResUri = remember {
+        "android.resource://${context.packageName}/drawable/default_character"
+    }
 
     var name by remember(current.id) { mutableStateOf(current.name) }
     var region by remember(current.id) { mutableStateOf(current.region) }
@@ -51,7 +58,9 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
     var level by remember(current.id) { mutableStateOf(current.level.toString()) }
 
     var photoUri by remember(current.id) { mutableStateOf(current.photoUri) }
-    val pickMedia = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val pickMedia = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
         uri?.let {
             photoUri = it.toString()
             try {
@@ -63,7 +72,9 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
     }
 
     val classOptions = ClassPresets.options
-    var clazz by remember(current.id) { mutableStateOf(if (current.clazz in classOptions) current.clazz else classOptions.first()) }
+    var clazz by remember(current.id) {
+        mutableStateOf(if (current.clazz in classOptions) current.clazz else classOptions.first())
+    }
     var clazzExpanded by remember { mutableStateOf(false) }
 
     var intel by remember(current.id) { mutableStateOf(current.attributes.intelligence) }
@@ -77,13 +88,17 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
 
     LaunchedEffect(clazz) {
         ClassPresets.base[clazz]?.let { b ->
-            intel = b.intelligence; dex = b.dexterity; str = b.strength; agi = b.agility; cha = b.charisma
+            intel = b.intelligence
+            dex = b.dexterity
+            str = b.strength
+            agi = b.agility
+            cha = b.charisma
         }
         points = 10
     }
 
-    fun inc(set: (Int)->Unit, v: Int) { if (points > 0 && v < 50) { set(v+1); points-- } }
-    fun dec(set: (Int)->Unit, v: Int, floor: Int) { if (v > floor) { set(v-1); points++ } }
+    fun inc(set: (Int) -> Unit, v: Int) { if (points > 0 && v < 50) { set(v + 1); points-- } }
+    fun dec(set: (Int) -> Unit, v: Int, floor: Int) { if (v > floor) { set(v - 1); points++ } }
     fun bar(v: Int) = (v.coerceIn(0, 50)) / 50f
 
     Scaffold(
@@ -99,10 +114,13 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
         }
     ) { pad ->
         Column(
-            Modifier.padding(pad)
-                .verticalScroll(rememberScrollState())
+            Modifier.padding(pad).verticalScroll(rememberScrollState())
         ) {
-            ElevatedCard(Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(20.dp)) {
+            // FOTO
+            ElevatedCard(
+                Modifier.fillMaxWidth().padding(16.dp),
+                shape = RoundedCornerShape(20.dp)
+            ) {
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -123,7 +141,11 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
                 }
             }
 
-            Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // CAMPOS
+            Column(
+                Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 OutlinedTextField(
                     value = name, onValueChange = { name = it },
                     label = { Text("Nome") }, singleLine = true,
@@ -139,7 +161,9 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
                 OutlinedTextField(
                     value = age, onValueChange = { age = it.filter { ch -> ch.isDigit() } },
                     label = { Text("Idade") }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number, imeAction = ImeAction.Next
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -148,43 +172,45 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
                     onExpandedChange = { clazzExpanded = !clazzExpanded }
                 ) {
                     OutlinedTextField(
-                        value = clazz, onValueChange = {}, readOnly = true, label = { Text("Classe") },
+                        value = clazz, onValueChange = {}, readOnly = true,
+                        label = { Text("Classe") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = clazzExpanded) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
                     ExposedDropdownMenu(
                         expanded = clazzExpanded,
-                        onDismissRequest = { clazzExpanded = false }) {
-                        classOptions.forEach { opt -> DropdownMenuItem(text = { Text(opt) }, onClick = { clazz = opt; clazzExpanded = false }) }
+                        onDismissRequest = { clazzExpanded = false }
+                    ) {
+                        classOptions.forEach { opt ->
+                            DropdownMenuItem(
+                                text = { Text(opt) },
+                                onClick = { clazz = opt; clazzExpanded = false }
+                            )
+                        }
                     }
                 }
 
                 OutlinedTextField(
                     value = level, onValueChange = { level = it.filter { ch -> ch.isDigit() } },
                     label = { Text("Nível") }, singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number, imeAction = ImeAction.Done
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text("Pontos disponíveis: $points", style = MaterialTheme.typography.titleMedium)
 
                 @Composable
-                fun RowAttr(title: String, value: Int, floor: Int, set: (Int)->Unit) {
-                    ElevatedCard(
-                        Modifier.fillMaxWidth()
-                    ) {
+                fun RowAttr(title: String, value: Int, floor: Int, set: (Int) -> Unit) {
+                    ElevatedCard(Modifier.fillMaxWidth()) {
                         Row(
                             Modifier.fillMaxWidth().padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Column(
-                                Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    title,
-                                    style = MaterialTheme.typography.titleSmall
-                                )
+                            Column(Modifier.weight(1f)) {
+                                Text(title, style = MaterialTheme.typography.titleSmall)
                                 LinearProgressIndicator(
                                     progress = { bar(value) },
                                     modifier = Modifier.fillMaxWidth(),
@@ -207,6 +233,7 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
                 RowAttr("Carisma",      cha,   base.charisma)     { cha = it }
 
                 Spacer(Modifier.height(8.dp))
+
                 Button(
                     onClick = {
                         val updated = current.copy(
@@ -219,14 +246,18 @@ fun EditCharacterScreen(vm: CharacterViewModel, id: Long, nav: NavController) {
                             photoUri = (photoUri ?: defaultResUri),
                             attributes = Attributes(intel, dex, str, agi, cha)
                         )
+
+                        // Atualiza APENAS local (novo modelo)
                         vm.updateCharacter(updated)
+
                         nav.popBackStack()
                     },
                     enabled = name.isNotBlank(),
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 ) {
                     Icon(Icons.Filled.Save, contentDescription = null)
-                    Spacer(Modifier.width(8.dp)); Text("Salvar alterações")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Salvar alterações")
                 }
             }
         }

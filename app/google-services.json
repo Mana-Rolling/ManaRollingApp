@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "793047004173",
-    "project_id": "manarolliing",
-    "storage_bucket": "manarolliing.firebasestorage.app"
+    "project_number": "637307813420",
+    "project_id": "manarolling-891e2",
+    "storage_bucket": "manarolling-891e2.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:793047004173:android:874bae289c0cf9fc359144",
+        "mobilesdk_app_id": "1:637307813420:android:9973bc36e067c015ea5b89",
         "android_client_info": {
           "package_name": "com.fiap.manarolling"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBIUL6e75e6NT7WEqrsyqjSZ951Z4na9mM"
+          "current_key": "AIzaSyAV536PchpA25DRo3WgtBXl6Er7m53WvHc"
         }
       ],
       "services": {

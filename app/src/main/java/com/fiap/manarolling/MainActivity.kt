@@ -1,7 +1,6 @@
 package com.fiap.manarolling
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -9,9 +8,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
@@ -19,22 +24,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavHostController
-import androidx.navigation.NavController
 import androidx.navigation.navArgument
-import com.fiap.manarolling.ui.ChapterEditorScreen
-import com.fiap.manarolling.ui.CharacterDetailScreen
-import com.fiap.manarolling.ui.CharacterViewModel
-import com.fiap.manarolling.ui.CreateCharacterScreen
-import com.fiap.manarolling.ui.DiceScreen
-import com.fiap.manarolling.ui.EditCharacterScreen
-import com.fiap.manarolling.ui.ListCharactersScreen
-import com.fiap.manarolling.ui.Routes
-import com.fiap.manarolling.ui.StoryScreen
-import com.fiap.manarolling.data.UserRole
 import com.fiap.manarolling.model.Character
+import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.ui.*
 import com.fiap.manarolling.ui.theme.ManaRollingAppTheme
 
@@ -43,98 +36,78 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val nav = rememberNavController()
+
+            // VMs no ESCOPO DA ACTIVITY (únicas para todo o app enquanto a Activity existir)
             val vm: CharacterViewModel = viewModel()
-            val settings: SettingsViewModel = viewModel()
+            val mpVm: MultiplayerViewModel = viewModel()
 
             val backStack = nav.currentBackStackEntryAsState()
             val current: NavDestination? = backStack.value?.destination
-            val role by settings.role.collectAsState()
+            val currentRoute = current?.route ?: ""
 
+            // quais rotas contam como “aba Personagens” selecionada
+            val selectedCharacters = currentRoute.startsWith(Routes.LIST) ||
+                    currentRoute.startsWith("${Routes.DETAIL}/") ||
+                    currentRoute.startsWith(Routes.CREATE) ||
+                    currentRoute.startsWith("${Routes.EDIT}/") ||
+                    currentRoute.startsWith("${Routes.STORY}/") ||
+                    currentRoute.startsWith("${Routes.CHAPTER_CREATE}/") ||
+                    currentRoute.startsWith("${Routes.CHAPTER_EDIT}/")
 
             ManaRollingAppTheme {
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
-                            val selectedCharacters =
-                                when (role) {
-                                    UserRole.PLAYER -> current?.route?.startsWith(Routes.DETAIL) == true ||
-                                            current?.route?.startsWith(Routes.CREATE) == true ||
-                                            current?.route?.startsWith(Routes.EDIT) == true ||
-                                            current?.route?.startsWith(Routes.STORY) == true ||
-                                            current?.route?.startsWith(Routes.CHAPTER_CREATE) == true ||
-                                            current?.route?.startsWith(Routes.CHAPTER_EDIT) == true
-
-                                    UserRole.MASTER -> current?.route?.startsWith(Routes.LIST) == true
-                                    else -> false
-                                }
+                            // Personagens
                             NavigationBarItem(
                                 selected = selectedCharacters,
-                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer),
-                                onClick = {
-                                    when (role) {
-                                        UserRole.PLAYER -> nav.navigate(Routes.SPLASH) {
-                                            launchSingleTop = true
-                                        }
-
-                                        UserRole.MASTER -> nav.navigate(Routes.LIST) {
-                                            launchSingleTop = true
-                                        }
-
-                                        else -> nav.navigate(Routes.ROLE_SELECT) {
-                                            launchSingleTop = true
-                                        }
-                                    }
-                                },
-                                icon = {
-                                    if (role == UserRole.PLAYER) Icon(
-                                        Icons.Filled.Person,
-                                        null
-                                    ) else Icon(Icons.Filled.Person, null)
-                                },
-                                label = {
-                                    Text(
-                                        if (role == UserRole.PLAYER) "Meu Personagem" else "Personagens")
-                                }
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                ),
+                                onClick = { nav.navigate(Routes.LIST) { launchSingleTop = true } },
+                                icon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                                label = { Text("Personagens") }
                             )
+                            // Multiplayer (Lobby)
                             NavigationBarItem(
-                                selected = current?.route == Routes.LOBBY,
+                                selected = currentRoute.startsWith(Routes.LOBBY) ||
+                                        currentRoute.startsWith(Routes.MULTIPLAYER) ||
+                                        currentRoute.startsWith(Routes.SESSION_CHAR_DETAILS),
                                 onClick = { nav.navigate(Routes.LOBBY) { launchSingleTop = true } },
                                 icon = { Icon(Icons.Filled.Groups, contentDescription = null) },
                                 label = { Text("Multiplayer") },
-                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             )
+                            // Dado
                             NavigationBarItem(
-                                selected = current?.route == Routes.DICE,
+                                selected = currentRoute.startsWith(Routes.DICE),
                                 onClick = { nav.navigate(Routes.DICE) { launchSingleTop = true } },
                                 icon = { Icon(Icons.Filled.Casino, contentDescription = null) },
                                 label = { Text("Dado") },
-                                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer)
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             )
                         }
                     }
                 ) { pad ->
-                    // nav graph
+                    // Nav graph
                     NavHost(
                         navController = nav,
-                        startDestination = Routes.SPLASH,
+                        startDestination = Routes.LIST, // inicia na lista de personagens
                         modifier = Modifier.padding(pad)
                     ) {
-                        // decide destino (role + playerId)
-                        composable(Routes.SPLASH) { SplashDecider(settings, vm, nav) }
-
-                        // escolha de papel
-                        composable(Routes.ROLE_SELECT) { RoleSelectScreen(settings, nav) }
-
-                        // mestre (lista)
+                        // Lista de personagens
                         composable(Routes.LIST) { ListCharactersScreen(vm, nav) }
 
-                        // criar personagem (usa callback pra salvar o id do jogador)
+                        // Criar personagem
                         composable(Routes.CREATE) {
                             CreateCharacterScreen(
                                 vm = vm,
                                 nav = nav,
                                 onCreated = { created: Character ->
-                                    settings.setPlayerId(created.id)
                                     nav.navigate("${Routes.DETAIL}/${created.id}") {
                                         popUpTo(Routes.CREATE) { inclusive = true }
                                     }
@@ -142,7 +115,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // detalhe
+                        // Detalhe do personagem local
                         composable(
                             route = "${Routes.DETAIL}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
@@ -151,7 +124,7 @@ class MainActivity : ComponentActivity() {
                             CharacterDetailScreen(vm, id, nav)
                         }
 
-                        // editar
+                        // Editar personagem local
                         composable(
                             route = "${Routes.EDIT}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
@@ -160,7 +133,12 @@ class MainActivity : ComponentActivity() {
                             EditCharacterScreen(vm, id, nav)
                         }
 
-                        // história / capítulos
+                        // Lista offline (opcional)
+                        composable(Routes.OFFLINE) {
+                            OfflineCharactersScreen(onBack = { nav.popBackStack() })
+                        }
+
+                        // História / Capítulos
                         composable(
                             route = "${Routes.STORY}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
@@ -187,40 +165,45 @@ class MainActivity : ComponentActivity() {
                             ChapterEditorScreen(vm, charId, nav, chapterId)
                         }
 
-                        // dado
+                        // Dado
                         composable(Routes.DICE) { DiceScreen() }
 
+                        // Lobby (entrar/criar sessão – escolhe personagem ao entrar)
                         composable(Routes.LOBBY) {
                             LobbyScreen(
-                                onCreated = { sessionId ->
-                                    // quando o mestre criar sala → ir para MULTIPLAYER
-                                    nav.navigate("${Routes.MULTIPLAYER}/${sessionId}/{playerId}")
-                                },
-                                onJoined = { sessionId ->
-                                    // quando o jogador entrar na sala → ir para MULTIPLAYER
-                                    nav.navigate("${Routes.MULTIPLAYER}/${sessionId}/{playerId}")
+                                vm = mpVm,
+                                characterVm = vm,
+                                navToSession = { sessionId ->
+                                    nav.navigate("${Routes.MULTIPLAYER}/$sessionId")
                                 }
                             )
                         }
 
-                        // rota Multiplayer com parâmetros
-                        composable(
-                            route = "${Routes.MULTIPLAYER}/{sessionId}/{playerId}",
-                            arguments = listOf(
-                                navArgument("sessionId") { type = NavType.StringType },
-                                navArgument("playerId") { type = NavType.StringType }
-                            )
-                        ) { backStackEntry ->
-                            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: ""
-                            val playerId = backStackEntry.arguments?.getString("playerId") ?: ""
-                            Log.d("aqui oh", "sessionId: $sessionId")
-
+                        // Sessão (lista todos os personagens; abrir ficha não desconecta)
+                        composable("${Routes.MULTIPLAYER}/{sessionId}") { back ->
+                            val sessionId = back.arguments?.getString("sessionId") ?: return@composable
                             MultiplayerScreen(
                                 sessionId = sessionId,
-                                playerId = playerId,
-                                onExit = {
-                                    nav.popBackStack(Routes.LOBBY, inclusive = false)
-                                }
+                                onLeave = { nav.popBackStack() },
+                                onOpenCharacter = { ownerUid, charId ->
+                                    nav.navigate("${Routes.SESSION_CHAR_DETAILS}/$sessionId/$ownerUid/$charId")
+                                },
+                                onCreateCharacter = { nav.navigate(Routes.CREATE) }, // FAB só pro mestre
+                                vm = mpVm,                 // <<< passa a VM da Activity
+                                characterVm = vm          // <<< passa a VM da Activity
+                            )
+                        }
+
+                        // Ficha online (somente leitura)
+                        composable("${Routes.SESSION_CHAR_DETAILS}/{sessionId}/{ownerUid}/{charId}") { back ->
+                            val sessionId = back.arguments?.getString("sessionId") ?: return@composable
+                            val ownerUid  = back.arguments?.getString("ownerUid") ?: return@composable
+                            val charId    = back.arguments?.getString("charId")?.toLongOrNull() ?: return@composable
+                            SessionCharacterDetailsScreen(
+                                sessionId = sessionId,
+                                ownerUid = ownerUid,
+                                charId = charId,
+                                nav = nav
                             )
                         }
                     }
