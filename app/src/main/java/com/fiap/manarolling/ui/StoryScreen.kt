@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.model.Character
+import com.fiap.manarolling.ui.character.CharacterViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

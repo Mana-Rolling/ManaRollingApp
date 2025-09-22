@@ -1,4 +1,4 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.character
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

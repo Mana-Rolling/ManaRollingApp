@@ -2,6 +2,18 @@ package com.fiap.manarolling.model
 
 import kotlinx.serialization.Serializable
 
+
+@Serializable
+data class Vitals(
+    val hpMax: Int = 0,
+    val manaMax: Int = 20
+)
+
+@Serializable
+data class RuntimeVitals(
+    val hp: Int = 0,
+    val mana: Int = 20
+)
 @Serializable
 data class Attributes(
     var intelligence: Int = 5,
@@ -25,5 +37,8 @@ data class Character(
 
     var attributes: Attributes = Attributes(),
     var story: Story = Story(),
-    val ownerUid: String = ""
+    val ownerUid: String = "",
+
+    val vitals: Vitals = Vitals(),
+    val runtime: RuntimeVitals = RuntimeVitals()
 )

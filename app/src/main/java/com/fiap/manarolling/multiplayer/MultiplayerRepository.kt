@@ -1,7 +1,10 @@
 package com.fiap.manarolling.multiplayer
 
 import com.fiap.manarolling.model.Character as MRCharacter
-import com.google.firebase.database.*
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 class MultiplayerRepository(
     private val db: FirebaseDatabase = FirebaseDatabase.getInstance()
@@ -16,89 +19,147 @@ class MultiplayerRepository(
             val sessionId = code()
             sessionsRef.child(sessionId).addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snap: DataSnapshot) {
-                    if (snap.exists()) return tryCreate()
+                    if (snap.exists()) {
+                        // colisão rara de código: tenta outro
+                        tryCreate(); return
+                    }
                     val session = GameSession(
                         id = sessionId,
                         masterId = masterId,
                         masterName = masterName,
-                        players = mapOf(masterId to PlayerInfo(id = masterId, name = masterName, online = true, lastSeen = System.currentTimeMillis())),
+                        players = emptyMap(),
                         state = emptyMap(),
                         createdAt = System.currentTimeMillis()
                     )
-                    sessionsRef.child(sessionId).setValue(session).addOnCompleteListener {
-                        callback(if (it.isSuccessful) sessionId else null, it.exception)
-                    }
+                    sessionsRef.child(sessionId).setValue(session)
+                        .addOnSuccessListener { callback(sessionId, null) }
+                        .addOnFailureListener { callback(null, it) }
                 }
-                override fun onCancelled(error: DatabaseError) = callback(null, error.toException())
+                override fun onCancelled(error: DatabaseError) {
+                    callback(null, error.toException())
+                }
             })
         }
         tryCreate()
     }
 
-    /* ===== Join já levando um personagem (atômico) ===== */
+    /* ===== Entrar na sessão com personagem ===== */
     fun joinSessionWithCharacter(
         sessionId: String,
-        uid: String,
+        playerId: String,
         playerName: String,
         character: MRCharacter,
         callback: (Boolean, Exception?) -> Unit
     ) {
-        val updates = hashMapOf<String, Any>(
-            "/sessions/$sessionId/players/$uid" to PlayerInfo(
-                id = uid,
+        // garante ownerUid correto para a sessão (compatível com o resto do app)
+        val sessionChar = try {
+            character.copy(ownerUid = playerId)
+        } catch (_: Throwable) {
+            // se estiver numa versão antiga onde o copy falhar, usa o objeto como está
+            character
+        }
+
+        val updates = hashMapOf<String, Any?>(
+            "players/$playerId" to PlayerInfo(
+                id = playerId,
                 name = playerName,
                 online = true,
                 lastSeen = System.currentTimeMillis(),
                 selectedCharacterId = character.id
             ),
-            "/sessions/$sessionId/characters/$uid/${character.id}" to character
+            "characters/$playerId/${character.id}" to sessionChar
         )
-        db.reference.updateChildren(updates).addOnCompleteListener { callback(it.isSuccessful, it.exception) }
+
+        sessionsRef.child(sessionId).updateChildren(updates)
+            .addOnSuccessListener { callback(true, null) }
+            .addOnFailureListener { callback(false, it) }
     }
 
-    /* ===== Listeners de sessão ===== */
+    /* ===== Estado da sessão ===== */
     fun startListening(sessionId: String, onUpdate: (GameSession?) -> Unit) {
-        removeSessionListener(sessionId)
         val l = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                onUpdate(snapshot.getValue(GameSession::class.java))
+            override fun onDataChange(snap: DataSnapshot) {
+                val s = snap.getValue(GameSession::class.java)
+                onUpdate(s)
             }
-            override fun onCancelled(error: DatabaseError) { onUpdate(null) }
+            override fun onCancelled(error: DatabaseError) {
+                onUpdate(null)
+            }
         }
         sessionsRef.child(sessionId).addValueEventListener(l)
         listeners["session:$sessionId"] = l
     }
+
     fun removeSessionListener(sessionId: String) {
-        listeners.remove("session:$sessionId")?.let {
-            sessionsRef.child(sessionId).removeEventListener(it)
-        }
+        listeners.remove("session:$sessionId")?.let { sessionsRef.child(sessionId).removeEventListener(it) }
     }
 
     /* ===== Personagens na sessão ===== */
     private fun charsRef(sessionId: String) = sessionsRef.child(sessionId).child("characters")
 
     fun listenCharacters(sessionId: String, onUpdate: (Map<String, List<MRCharacter>>) -> Unit) {
-        removeCharactersListener(sessionId)
         val l = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
+            override fun onDataChange(snap: DataSnapshot) {
                 val map = mutableMapOf<String, MutableList<MRCharacter>>()
-                snapshot.children.forEach { owner ->
+                for (owner in snap.children) {
+                    val ownerId = owner.key ?: continue
                     val list = mutableListOf<MRCharacter>()
-                    owner.children.forEach { c -> c.getValue(MRCharacter::class.java)?.let(list::add) }
-                    map[owner.key ?: ""] = list
+                    for (c in owner.children) {
+                        val ch = c.getValue(MRCharacter::class.java)
+                        if (ch != null) list += ch
+                    }
+                    map[ownerId] = list
                 }
                 onUpdate(map)
             }
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                onUpdate(emptyMap())
+            }
         }
         charsRef(sessionId).addValueEventListener(l)
         listeners["chars:$sessionId"] = l
     }
+
     fun removeCharactersListener(sessionId: String) {
         listeners.remove("chars:$sessionId")?.let { charsRef(sessionId).removeEventListener(it) }
     }
 
-    /* ===== Util ===== */
+    /* ===== Atualizações de HP/Mana (apenas Mestre deve chamar) ===== */
+    fun updateCharacterHp(
+        sessionId: String,
+        ownerUid: String,
+        charId: Long,
+        newHp: Int,
+        hpMax: Int,
+        callback: ((Boolean, Exception?) -> Unit)? = null
+    ) {
+        val coerced = newHp.coerceIn(0, hpMax)
+        sessionsRef.child(sessionId)
+            .child("characters").child(ownerUid).child(charId.toString())
+            .child("runtime").child("hp")
+            .setValue(coerced)
+            .addOnSuccessListener { callback?.invoke(true, null) }
+            .addOnFailureListener { e -> callback?.invoke(false, e) }
+    }
+
+    fun updateCharacterMana(
+        sessionId: String,
+        ownerUid: String,
+        charId: Long,
+        newMana: Int,
+        manaMax: Int,
+        callback: ((Boolean, Exception?) -> Unit)? = null
+    ) {
+        val coerced = newMana.coerceIn(0, manaMax)
+        sessionsRef.child(sessionId)
+            .child("characters").child(ownerUid).child(charId.toString())
+            .child("runtime").child("mana")
+            .setValue(coerced)
+            .addOnSuccessListener { callback?.invoke(true, null) }
+            .addOnFailureListener { e -> callback?.invoke(false, e) }
+    }
+
+    /* ===== Sair da sessão ===== */
     fun leaveSession(sessionId: String, playerId: String, callback: (Boolean, Exception?) -> Unit) {
         sessionsRef.child(sessionId).child("players").child(playerId)
             .removeValue().addOnCompleteListener { callback(it.isSuccessful, it.exception) }

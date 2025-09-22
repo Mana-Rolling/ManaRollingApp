@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.model.Chapter
+import com.fiap.manarolling.ui.character.CharacterViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

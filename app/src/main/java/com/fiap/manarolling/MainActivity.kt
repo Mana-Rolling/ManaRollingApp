@@ -15,8 +15,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
@@ -29,6 +29,10 @@ import androidx.navigation.navArgument
 import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.ui.*
+import com.fiap.manarolling.ui.character.CharacterViewModel
+import com.fiap.manarolling.ui.character.ListCharactersScreen
+import com.fiap.manarolling.ui.multiplayer.LobbyScreen
+import com.fiap.manarolling.ui.multiplayer.MultiplayerScreen
 import com.fiap.manarolling.ui.theme.ManaRollingAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,15 +41,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             val nav = rememberNavController()
 
-            // VMs no ESCOPO DA ACTIVITY (únicas para todo o app enquanto a Activity existir)
-            val vm: CharacterViewModel = viewModel()
+            // VMs no escopo da Activity
+            val characterVm: CharacterViewModel = viewModel()
+            val settingsVm: SettingsViewModel = viewModel()
             val mpVm: MultiplayerViewModel = viewModel()
 
             val backStack = nav.currentBackStackEntryAsState()
             val current: NavDestination? = backStack.value?.destination
             val currentRoute = current?.route ?: ""
 
-            // quais rotas contam como “aba Personagens” selecionada
             val selectedCharacters = currentRoute.startsWith(Routes.LIST) ||
                     currentRoute.startsWith("${Routes.DETAIL}/") ||
                     currentRoute.startsWith(Routes.CREATE) ||
@@ -58,7 +62,6 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
-                            // Personagens
                             NavigationBarItem(
                                 selected = selectedCharacters,
                                 colors = NavigationBarItemDefaults.colors(
@@ -68,7 +71,6 @@ class MainActivity : ComponentActivity() {
                                 icon = { Icon(Icons.Filled.Person, contentDescription = null) },
                                 label = { Text("Personagens") }
                             )
-                            // Multiplayer (Lobby)
                             NavigationBarItem(
                                 selected = currentRoute.startsWith(Routes.LOBBY) ||
                                         currentRoute.startsWith(Routes.MULTIPLAYER) ||
@@ -80,7 +82,6 @@ class MainActivity : ComponentActivity() {
                                     indicatorColor = MaterialTheme.colorScheme.primaryContainer
                                 )
                             )
-                            // Dado
                             NavigationBarItem(
                                 selected = currentRoute.startsWith(Routes.DICE),
                                 onClick = { nav.navigate(Routes.DICE) { launchSingleTop = true } },
@@ -93,65 +94,65 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { pad ->
-                    // Nav graph
                     NavHost(
                         navController = nav,
-                        startDestination = Routes.LIST, // inicia na lista de personagens
+                        startDestination = Routes.LIST,
                         modifier = Modifier.padding(pad)
                     ) {
-                        // Lista de personagens
-                        composable(Routes.LIST) { ListCharactersScreen(vm, nav) }
+                        // Lista (nome correto: ListCharacterScreen)
+                        composable(Routes.LIST) { ListCharactersScreen(characterVm, nav) }
 
-                        // Criar personagem
+                        // Criar personagem (assinatura correta da sua tela)
                         composable(Routes.CREATE) {
                             CreateCharacterScreen(
-                                vm = vm,
-                                nav = nav,
+                                onBack = { nav.popBackStack() },
                                 onCreated = { created: Character ->
                                     nav.navigate("${Routes.DETAIL}/${created.id}") {
                                         popUpTo(Routes.CREATE) { inclusive = true }
                                     }
-                                }
+                                },
+                                vm = settingsVm,
+                                repoVM = characterVm
                             )
                         }
 
-                        // Detalhe do personagem local
+                        //
                         composable(
                             route = "${Routes.DETAIL}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
                         ) { back ->
                             val id = back.arguments?.getLong("id") ?: 0L
-                            CharacterDetailScreen(vm, id, nav)
+                            CharacterDetailScreen(characterVm, id, nav)
                         }
 
-                        // Editar personagem local
+                        // Editar
                         composable(
                             route = "${Routes.EDIT}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
                         ) { back ->
                             val id = back.arguments?.getLong("id") ?: 0L
-                            EditCharacterScreen(vm, id, nav)
+                            EditCharacterScreen(characterVm, id, nav)
                         }
 
-                        // Lista offline (opcional)
+                        // Offline (se usar)
                         composable(Routes.OFFLINE) {
                             OfflineCharactersScreen(onBack = { nav.popBackStack() })
                         }
 
-                        // História / Capítulos
+                        // História/Capítulos
                         composable(
                             route = "${Routes.STORY}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
                         ) { back ->
                             val id = back.arguments?.getLong("id") ?: 0L
-                            StoryScreen(vm, id, nav)
+                            StoryScreen(characterVm, id, nav)
                         }
                         composable(
                             route = "${Routes.CHAPTER_CREATE}/{id}",
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
                         ) { back ->
                             val id = back.arguments?.getLong("id") ?: 0L
-                            ChapterEditorScreen(vm, id, nav)
+                            ChapterEditorScreen(characterVm, id, nav)
                         }
                         composable(
                             route = "${Routes.CHAPTER_EDIT}/{charId}/{chapterId}",
@@ -162,24 +163,24 @@ class MainActivity : ComponentActivity() {
                         ) { back ->
                             val charId = back.arguments?.getLong("charId") ?: 0L
                             val chapterId = back.arguments?.getLong("chapterId") ?: 0L
-                            ChapterEditorScreen(vm, charId, nav, chapterId)
+                            ChapterEditorScreen(characterVm, charId, nav, chapterId)
                         }
 
                         // Dado
                         composable(Routes.DICE) { DiceScreen() }
 
-                        // Lobby (entrar/criar sessão – escolhe personagem ao entrar)
+                        // Lobby
                         composable(Routes.LOBBY) {
                             LobbyScreen(
                                 vm = mpVm,
-                                characterVm = vm,
+                                characterVm = characterVm,
                                 navToSession = { sessionId ->
                                     nav.navigate("${Routes.MULTIPLAYER}/$sessionId")
                                 }
                             )
                         }
 
-                        // Sessão (lista todos os personagens; abrir ficha não desconecta)
+                        // Sessão
                         composable("${Routes.MULTIPLAYER}/{sessionId}") { back ->
                             val sessionId = back.arguments?.getString("sessionId") ?: return@composable
                             MultiplayerScreen(
@@ -188,13 +189,13 @@ class MainActivity : ComponentActivity() {
                                 onOpenCharacter = { ownerUid, charId ->
                                     nav.navigate("${Routes.SESSION_CHAR_DETAILS}/$sessionId/$ownerUid/$charId")
                                 },
-                                onCreateCharacter = { nav.navigate(Routes.CREATE) }, // FAB só pro mestre
-                                vm = mpVm,                 // <<< passa a VM da Activity
-                                characterVm = vm          // <<< passa a VM da Activity
+                                onCreateCharacter = { nav.navigate(Routes.CREATE) },
+                                vm = mpVm,
+                                characterVm = characterVm
                             )
                         }
 
-                        // Ficha online (somente leitura)
+                        // Ficha online
                         composable("${Routes.SESSION_CHAR_DETAILS}/{sessionId}/{ownerUid}/{charId}") { back ->
                             val sessionId = back.arguments?.getString("sessionId") ?: return@composable
                             val ownerUid  = back.arguments?.getString("ownerUid") ?: return@composable
@@ -203,7 +204,8 @@ class MainActivity : ComponentActivity() {
                                 sessionId = sessionId,
                                 ownerUid = ownerUid,
                                 charId = charId,
-                                nav = nav
+                                nav = nav,
+                                vm = mpVm
                             )
                         }
                     }

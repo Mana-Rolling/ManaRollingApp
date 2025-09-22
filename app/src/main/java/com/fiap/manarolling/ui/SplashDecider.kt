@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import com.fiap.manarolling.data.UserRole
+import com.fiap.manarolling.ui.character.CharacterViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
