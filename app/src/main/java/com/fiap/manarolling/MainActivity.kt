@@ -30,9 +30,6 @@ import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.ui.*
 import com.fiap.manarolling.ui.character.CharacterViewModel
-import com.fiap.manarolling.ui.character.ListCharactersScreen
-import com.fiap.manarolling.ui.multiplayer.LobbyScreen
-import com.fiap.manarolling.ui.multiplayer.MultiplayerScreen
 import com.fiap.manarolling.ui.theme.ManaRollingAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -100,7 +97,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(pad)
                     ) {
                         // Lista (nome correto: ListCharacterScreen)
-                        composable(Routes.LIST) { ListCharactersScreen(characterVm, nav) }
+                        composable(Routes.LIST) { ListCharacterScreen(characterVm, nav) }
 
                         // Criar personagem (assinatura correta da sua tela)
                         composable(Routes.CREATE) {

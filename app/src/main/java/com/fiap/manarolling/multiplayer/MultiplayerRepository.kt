@@ -1,10 +1,13 @@
 package com.fiap.manarolling.multiplayer
 
 import com.fiap.manarolling.model.Character as MRCharacter
+import com.fiap.manarolling.model.RuntimeVitals
+import com.fiap.manarolling.model.Vitals
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlin.math.min
 
 class MultiplayerRepository(
     private val db: FirebaseDatabase = FirebaseDatabase.getInstance()
@@ -20,7 +23,6 @@ class MultiplayerRepository(
             sessionsRef.child(sessionId).addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snap: DataSnapshot) {
                     if (snap.exists()) {
-                        // colisão rara de código: tenta outro
                         tryCreate(); return
                     }
                     val session = GameSession(
@@ -51,23 +53,49 @@ class MultiplayerRepository(
         character: MRCharacter,
         callback: (Boolean, Exception?) -> Unit
     ) {
-        // garante ownerUid correto para a sessão (compatível com o resto do app)
-        val sessionChar = try {
+        // 1) Ajuste de ownerUid
+        var sessionChar = try {
             character.copy(ownerUid = playerId)
         } catch (_: Throwable) {
-            // se estiver numa versão antiga onde o copy falhar, usa o objeto como está
             character
         }
 
+        // 2) Garantir vitais/runtime coerentes com o atributo de vida
+        val vidaAtributo = try { sessionChar.attributes.vida } catch (_: Throwable) { 10 }
+        val hpMax = if (sessionChar.vitals.hpMax > 0) sessionChar.vitals.hpMax else vidaAtributo
+        val manaMax = 20
+
+        val hpAtual = if (sessionChar.runtime.hp > 0) {
+            min(sessionChar.runtime.hp, hpMax)
+        } else {
+            hpMax
+        }
+        val manaAtual = if (sessionChar.runtime.mana > 0) {
+            min(sessionChar.runtime.mana, manaMax)
+        } else {
+            20
+        }
+
+        sessionChar = try {
+            sessionChar.copy(
+                vitals = Vitals(hpMax = hpMax, manaMax = manaMax),
+                runtime = RuntimeVitals(hp = hpAtual, mana = manaAtual)
+            )
+        } catch (_: Throwable) {
+            // fallback em caso de versões antigas do modelo
+            sessionChar
+        }
+
+        // 3) Atualizações no DB
         val updates = hashMapOf<String, Any?>(
             "players/$playerId" to PlayerInfo(
                 id = playerId,
                 name = playerName,
                 online = true,
                 lastSeen = System.currentTimeMillis(),
-                selectedCharacterId = character.id
+                selectedCharacterId = sessionChar.id
             ),
-            "characters/$playerId/${character.id}" to sessionChar
+            "characters/$playerId/${sessionChar.id}" to sessionChar
         )
 
         sessionsRef.child(sessionId).updateChildren(updates)
@@ -91,7 +119,9 @@ class MultiplayerRepository(
     }
 
     fun removeSessionListener(sessionId: String) {
-        listeners.remove("session:$sessionId")?.let { sessionsRef.child(sessionId).removeEventListener(it) }
+        listeners.remove("session:$sessionId")?.let {
+            sessionsRef.child(sessionId).removeEventListener(it)
+        }
     }
 
     /* ===== Personagens na sessão ===== */
@@ -121,7 +151,9 @@ class MultiplayerRepository(
     }
 
     fun removeCharactersListener(sessionId: String) {
-        listeners.remove("chars:$sessionId")?.let { charsRef(sessionId).removeEventListener(it) }
+        listeners.remove("chars:$sessionId")?.let {
+            charsRef(sessionId).removeEventListener(it)
+        }
     }
 
     /* ===== Atualizações de HP/Mana (apenas Mestre deve chamar) ===== */

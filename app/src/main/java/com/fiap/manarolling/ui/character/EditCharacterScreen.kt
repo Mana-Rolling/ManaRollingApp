@@ -9,14 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.ui.character.CharacterViewModel
-import androidx.compose.foundation.text.KeyboardOptions
 import kotlin.math.min
+
+private const val VIDA_CAP = 50
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,23 +36,6 @@ fun EditCharacterScreen(
                     }
                 }
             )
-        },
-        bottomBar = {
-            if (c != null) {
-                BottomAppBar {
-                    Spacer(Modifier.weight(1f))
-                    FilledTonalButton(
-                        onClick = {
-                            // ação de salvar é disparada no botão do conteúdo (para ter acesso aos states)
-                        },
-                        enabled = false // visual apenas (botão real fica na tela)
-                    ) {
-                        Icon(Icons.Filled.Save, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Salvar")
-                    }
-                }
-            }
         }
     ) { pad ->
         if (c == null) {
@@ -62,25 +44,25 @@ fun EditCharacterScreen(
                     .padding(pad)
                     .fillMaxSize(),
                 contentAlignment = Alignment.Center
-            ) {
-                Text("Personagem não encontrado")
-            }
+            ) { Text("Personagem não encontrado") }
             return@Scaffold
         }
 
-        // ====== STATES ======
-        val currentHpMax = try { c.vitals.hpMax } catch (_: Throwable) { 0 }
-        val currentManaMax = try { c.vitals.manaMax } catch (_: Throwable) { 20 }
+        // Valores atuais com fallback para fichas antigas
+        val hpMaxAtual   = runCatching { c.vitals.hpMax }.getOrDefault(0)
+        val vidaAttr     = runCatching { c.attributes.vida }.getOrDefault(hpMaxAtual)
+        val hpAtual      = runCatching { c.runtime.hp }.getOrDefault(vidaAttr)
+        val manaAtual    = runCatching { c.runtime.mana }.getOrDefault(20)
 
-        var vidaText by remember {
+        var vida by remember(c.id) {
             mutableStateOf(
-                if (currentHpMax > 0) currentHpMax.toString()
-                else maxOf(0, c.runtime.hp).toString()
+                when {
+                    hpMaxAtual > 0 -> hpMaxAtual
+                    vidaAttr   > 0 -> vidaAttr
+                    else           -> 10
+                }.coerceIn(8, VIDA_CAP)
             )
         }
-
-        val hpNow = try { c.runtime.hp } catch (_: Throwable) { currentHpMax }
-        val manaNow = try { c.runtime.mana } catch (_: Throwable) { 20 }
 
         Column(
             Modifier
@@ -89,46 +71,41 @@ fun EditCharacterScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Cabeçalho simples
             Text(c.name, style = MaterialTheme.typography.titleLarge)
             if (c.clazz.isNotBlank()) Text("Classe: ${c.clazz}")
             Text("Nível: ${c.level}")
 
             HorizontalDivider()
 
-            // ===== Campo Vida (HP Máx) =====
-            OutlinedTextField(
-                value = vidaText,
-                onValueChange = { txt -> vidaText = txt.filter { it.isDigit() } },
-                leadingIcon = { Icon(Icons.Filled.Favorite, contentDescription = null) },
-                label = { Text("Vida (HP Máx)") },
-                singleLine = true,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Done
-                ),
-                modifier = Modifier.fillMaxWidth()
+            // ===== Vida (HP Máx) como botões ± com CAP =====
+            VidaRow(
+                value = vida,
+                onChange = { vida = it.coerceIn(8, VIDA_CAP) }
             )
 
-            // Exibição dos valores atuais (somente leitura)
-            AssistChipBar(label = "HP atual", value = hpNow)
-            AssistChipBar(label = "Mana atual", value = manaNow)
-            AssistChipBar(label = "Mana Máx (fixo)", value = 20)
+            AssistChip(
+                onClick = {},
+                enabled = false,
+                label = { Text("HP atual: $hpAtual • Mana atual: $manaAtual • Mana Máx: 20") }
+            )
 
             Spacer(Modifier.height(8.dp))
 
-            // ===== Botão SALVAR =====
             Button(
                 onClick = {
-                    val hpMax = vidaText.toIntOrNull() ?: 0
+                    val vidaFinal = vida.coerceIn(8, VIDA_CAP)
                     val updated = c.copy(
+                        // atributo
+                        attributes = c.attributes.copy(vida = vidaFinal),
+                        // vitais
                         vitals = c.vitals.copy(
-                            hpMax = hpMax,
-                            manaMax = 20 // regra fixa
+                            hpMax = vidaFinal,
+                            manaMax = 20
                         ),
+                        // runtime coerente com os máximos
                         runtime = c.runtime.copy(
-                            hp = min(c.runtime.hp, hpMax.coerceAtLeast(0)),
-                            mana = min(c.runtime.mana, 20)
+                            hp = min(hpAtual, vidaFinal),
+                            mana = min(manaAtual, 20)
                         )
                     )
                     vm.updateCharacter(updated)
@@ -145,10 +122,31 @@ fun EditCharacterScreen(
 }
 
 @Composable
-private fun AssistChipBar(label: String, value: Int) {
-    AssistChip(
-        onClick = {},
-        label = { Text("$label: $value") },
-        enabled = false
-    )
+private fun VidaRow(
+    value: Int,
+    onChange: (Int) -> Unit
+) {
+    ElevatedCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Filled.Favorite, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Vida (HP Máx)", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.weight(1f))
+                Text("$value / $VIDA_CAP")
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalButton(onClick = { onChange(value - 1) }) { Text("-1") }
+                Text("$value", style = MaterialTheme.typography.titleLarge)
+                FilledTonalButton(onClick = { onChange(value + 1) }) { Text("+1") }
+            }
+        }
+    }
 }

@@ -10,8 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
-import com.google.firebase.database.FirebaseDatabase
-import kotlinx.coroutines.launch
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,13 +21,17 @@ fun SessionCharacterDetailsScreen(
     nav: NavController,
     vm: MultiplayerViewModel
 ) {
-    // Mantém listeners ativos entre telas
+    // Listeners da sessão
     LaunchedEffect(sessionId) {
         vm.startListening(sessionId)
         vm.startCharactersListener(sessionId)
     }
-
-    val scope = rememberCoroutineScope()
+    DisposableEffect(sessionId) {
+        onDispose {
+            vm.stopListening(sessionId)
+            vm.stopCharactersListener(sessionId)
+        }
+    }
 
     val charsByOwner by vm.sessionCharacters.collectAsState()
     val isMaster = vm.isMaster()
@@ -51,41 +53,34 @@ fun SessionCharacterDetailsScreen(
         }
     ) { pad ->
         if (ch == null) {
-            Box(
-                Modifier
-                    .padding(pad)
-                    .fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { Text("Carregando ficha…") }
+            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Carregando ficha…")
+            }
             return@Scaffold
         }
 
         val hpMax = ch.vitals.hpMax
         val manaMax = ch.vitals.manaMax
 
-        var hp by remember(ch.id, ch.runtime.hp) { mutableStateOf(ch.runtime.hp.coerceIn(0, max(0, hpMax))) }
-        var mana by remember(ch.id, ch.runtime.mana) { mutableStateOf(ch.runtime.mana.coerceIn(0, max(0, manaMax))) }
+        var hp by remember(ch.id, ch.runtime.hp) {
+            mutableStateOf(ch.runtime.hp.coerceIn(0, max(0, hpMax)))
+        }
+        var mana by remember(ch.id, ch.runtime.mana) {
+            mutableStateOf(ch.runtime.mana.coerceIn(0, max(0, manaMax)))
+        }
 
-        fun updateHp(newVal: Int) {
+        fun applyHp(newVal: Int) {
             if (!isMaster || hpMax <= 0) return
             val coerced = newVal.coerceIn(0, hpMax)
             hp = coerced
-            scope.launch {
-                FirebaseDatabase.getInstance()
-                    .getReference("sessions/$sessionId/characters/$ownerUid/$charId/runtime/hp")
-                    .setValue(coerced)
-            }
+            vm.setHp(sessionId, ownerUid, charId, coerced, hpMax)
         }
 
-        fun updateMana(newVal: Int) {
+        fun applyMana(newVal: Int) {
             if (!isMaster || manaMax <= 0) return
             val coerced = newVal.coerceIn(0, manaMax)
             mana = coerced
-            scope.launch {
-                FirebaseDatabase.getInstance()
-                    .getReference("sessions/$sessionId/characters/$ownerUid/$charId/runtime/mana")
-                    .setValue(coerced)
-            }
+            vm.setMana(sessionId, ownerUid, charId, coerced, manaMax)
         }
 
         Column(
@@ -94,31 +89,36 @@ fun SessionCharacterDetailsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Cabeçalho
             Text("Classe: ${ch.clazz}", style = MaterialTheme.typography.titleMedium)
-            Text("Nível: ${ch.level}")
-            if (ch.region.isNotBlank()) Text("Região: ${ch.region}")
-            if (ch.age > 0) Text("Idade: ${ch.age}")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AssistChip(onClick = {}, enabled = false, label = { Text("Nível: ${ch.level}") })
+                val vidaAttr = runCatching { ch.attributes.vida }.getOrDefault(hpMax)
+                AssistChip(onClick = {}, enabled = false, label = { Text("VIDA (atributo): $vidaAttr") })
+            }
 
             HorizontalDivider()
 
+            // ====== HP (apenas ±1 e Set) ======
             StatBarInline(
                 label = "HP",
                 current = hp,
                 max = hpMax,
                 editable = isMaster && hpMax > 0,
-                onMinus = { updateHp(hp - 1) },
-                onPlus  = { updateHp(hp + 1) },
-                onSet   = { v -> updateHp(v) }
+                onMinus = { applyHp(hp - 1) },
+                onPlus  = { applyHp(hp + 1) },
+                onSet   = { v -> applyHp(v) }
             )
 
+            // ====== Mana (apenas ±1 e Set) ======
             StatBarInline(
                 label = "Mana",
                 current = mana,
                 max = manaMax,
                 editable = isMaster && manaMax > 0,
-                onMinus = { updateMana(mana - 1) },
-                onPlus  = { updateMana(mana + 1) },
-                onSet   = { v -> updateMana(v) }
+                onMinus = { applyMana(mana - 1) },
+                onPlus  = { applyMana(mana + 1) },
+                onSet   = { v -> applyMana(v) }
             )
 
             HorizontalDivider()
@@ -133,7 +133,7 @@ fun SessionCharacterDetailsScreen(
     }
 }
 
-/** Barra de status inline (própria desta tela). */
+/** Barra de status inline com ±1 e campo Set (sem ±5). */
 @Composable
 private fun StatBarInline(
     label: String,
@@ -155,7 +155,7 @@ private fun StatBarInline(
             Text(label)
             Text("$current / $max")
         }
-        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
 
         if (editable) {
             Spacer(Modifier.height(8.dp))

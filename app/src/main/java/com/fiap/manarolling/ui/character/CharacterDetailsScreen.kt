@@ -62,7 +62,7 @@ fun CharacterDetailScreen(
             return@Scaffold
         }
 
-        // Fallbacks: funcionam mesmo que seu Character antigo não tenha vitais/runtime
+        // Fallbacks para compatibilidade com fichas antigas
         val hpMax  = try { c.vitals.hpMax }  catch (_: Throwable) { 0 }
         val manaMx = try { c.vitals.manaMax } catch (_: Throwable) { 20 }
         val hpNow  = try { c.runtime.hp }     catch (_: Throwable) { hpMax }
@@ -75,7 +75,7 @@ fun CharacterDetailScreen(
             contentPadding = PaddingValues(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Capa com imagem
+            // Capa
             item {
                 ElevatedCard(Modifier.fillMaxWidth()) {
                     Box(
@@ -97,7 +97,7 @@ fun CharacterDetailScreen(
                 }
             }
 
-            // Informações básicas
+            // Info básicas
             item {
                 ElevatedCard(
                     Modifier
@@ -148,6 +148,8 @@ fun CharacterDetailScreen(
             item { AttributeStat("Força",        c.attributes.strength) }
             item { AttributeStat("Agilidade",    c.attributes.agility) }
             item { AttributeStat("Carisma",      c.attributes.charisma) }
+            // NOVO: exibir o atributo de Vida (que agora existe no model)
+            item { AttributeStat("VIDA (atributo)", c.attributes.vida) }
 
             // História / Capítulos
             item {

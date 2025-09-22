@@ -1,121 +1,117 @@
-package com.fiap.manarolling.ui.character
+package com.fiap.manarolling.ui
 
-import coil.compose.AsyncImage
-import com.fiap.manarolling.R
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.fiap.manarolling.ui.Routes
-
+import com.fiap.manarolling.model.Character
+import com.fiap.manarolling.ui.character.CharacterViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ListCharactersScreen(vm: CharacterViewModel, nav: NavController) {
-    val list = vm.characters.collectAsState().value
+fun ListCharacterScreen(
+    vm: CharacterViewModel,
+    nav: NavController
+) {
+    val characters by vm.characters.collectAsState(initial = emptyList())
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text("Lista de Jogadores") },
-                navigationIcon = {
-                    IconButton(onClick = { nav.navigate(Routes.ROLE_SELECT) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
-                    }
-                }
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Seus personagens") }) },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = { nav.navigate(Routes.CREATE) },
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Criar")
-            }
-        },
+                icon = { androidx.compose.material3.Icon(Icons.Filled.Add, contentDescription = null) },
+                text = { Text("Novo personagem") }
+            )
+        }
     ) { pad ->
-        if (list.isEmpty()) {
-            Box(Modifier.padding(pad).fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.Groups, contentDescription = null)
-                    Spacer(Modifier.height(8.dp)); Text("Nenhum personagem",
-                    style = MaterialTheme.typography.titleMedium)
-                    Text("Toque no + para criar", style = MaterialTheme.typography.bodyMedium)
-                }
+        if (characters.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(pad)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Você ainda não tem personagens. Toque em “Novo personagem”.")
             }
-        } else {
-            LazyColumn(Modifier.padding(pad).padding(12.dp)) {
-                items(list) { c ->
-                    ElevatedCard(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(bottom = 10.dp)
-                            .clickable { nav.navigate("${Routes.DETAIL}/${c.id}") }
-                    ) {
-                        Row(
-                            Modifier.fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+            return@Scaffold
+        }
 
-                            // Thumb redonda
-                            if (c.photoUri != null) {
-                                AsyncImage(
-                                    model = c.photoUri ?: R.drawable.default_character,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(CircleShape)
-                                )
-                            } else {
-                                Surface(
-                                    modifier = Modifier.size(56.dp).clip(CircleShape),
-                                    color = MaterialTheme.colorScheme.surfaceVariant
-                                ) {
-                                    Box(
-                                        Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(Icons.Filled.Person, contentDescription = null)
-                                    }
-                                }
-                            }
+        LazyColumn(
+            modifier = Modifier
+                .padding(pad)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(characters, key = { it.id }) { c ->
+                CharacterRow(
+                    character = c,
+                    onClick = { nav.navigate("${Routes.DETAIL}/${c.id}") }
+                )
+            }
+            item { Spacer(Modifier.height(84.dp)) } // respiro pro FAB
+        }
+    }
+}
 
-                            Spacer(Modifier.width(12.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    c.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1, overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    "Classe: ${c.clazz.ifBlank { "-" }} • Nível ${c.level}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                            Spacer(Modifier.width(12.dp))
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null)
-                        }
-                    }
-                }
+@Composable
+private fun CharacterRow(
+    character: Character,
+    onClick: () -> Unit
+) {
+    val vidaAttr = runCatching { character.attributes.vida }.getOrDefault(0)
+    val hpMax = runCatching { character.vitals.hpMax }.getOrDefault(vidaAttr)
+
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.elevatedCardColors()
+    ) {
+        Column(Modifier.padding(12.dp)) {
+            Text(character.name, style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(2.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val clazz = character.clazz.ifBlank { "—" }
+                Text("Classe: $clazz")
+                Spacer(Modifier.width(8.dp))
+                Text("•")
+                Spacer(Modifier.width(8.dp))
+                Text("Nível: ${character.level}")
+            }
+
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AssistChip(onClick = {}, enabled = false, label = { Text("HP Máx: $hpMax") })
             }
         }
     }
