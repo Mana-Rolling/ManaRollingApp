@@ -1,5 +1,6 @@
 package com.fiap.manarolling.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -12,12 +13,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.fiap.manarolling.R
 import com.fiap.manarolling.model.Character
+import com.fiap.manarolling.model.ClassPresets
 import com.fiap.manarolling.ui.character.CharacterViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +71,8 @@ fun CharacterDetailScreen(
         val hpNow  = try { c.runtime.hp }     catch (_: Throwable) { hpMax }
         val manaNow= try { c.runtime.mana }   catch (_: Throwable) { 20 }
 
+        val context = LocalContext.current
+
         LazyColumn(
             modifier = Modifier
                 .padding(pad)
@@ -116,6 +121,100 @@ fun CharacterDetailScreen(
                     }
                 }
             }
+
+            // === NOVO: Arma & Habilidade da classe ===
+            item {
+                val loadout = ClassPresets.loadoutFor(c.clazz)
+                if (loadout != null) {
+                    ElevatedCard(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Column(
+                            Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text("Arma & Habilidade (${c.clazz})", style = MaterialTheme.typography.titleMedium)
+
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Arma
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text("Arma", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        val weaponResId = context.resources.getIdentifier(
+                                            loadout.weaponImageRes,
+                                            "drawable",
+                                            context.packageName
+                                        )
+                                        if (weaponResId != 0) {
+                                            Image(
+                                                painter = painterResource(id = weaponResId),
+                                                contentDescription = "Arma",
+                                                modifier = Modifier.size(40.dp),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                        Column {
+                                            Text(loadout.weaponName, style = MaterialTheme.typography.bodyLarge)
+                                            Text("Dano: ${loadout.weaponDamage}", style = MaterialTheme.typography.bodySmall)
+                                        }
+                                    }
+                                }
+
+                                // Habilidade
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text("Habilidade", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        val abilityResId = context.resources.getIdentifier(
+                                            loadout.abilityImageRes,
+                                            "drawable",
+                                            context.packageName
+                                        )
+                                        if (abilityResId != 0) {
+                                            Image(
+                                                painter = painterResource(id = abilityResId),
+                                                contentDescription = "Habilidade",
+                                                modifier = Modifier.size(40.dp),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                        Column {
+                                            Text(loadout.abilityName, style = MaterialTheme.typography.bodyLarge)
+                                            val effect = if (loadout.healing) "Cura: ${loadout.abilityPower}" else "Dano: ${loadout.abilityPower}"
+                                            Text(effect, style = MaterialTheme.typography.bodySmall)
+                                            AssistChip(onClick = {}, enabled = false, label = { Text("Mana: ${loadout.manaCost}") })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    OutlinedCard(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text(
+                            "Defina uma classe para ver a arma e a habilidade.",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+            // === FIM DO NOVO BLOCO ===
 
             // Barras de HP / Mana (somente exibição no local/offline)
             if (hpMax > 0) {

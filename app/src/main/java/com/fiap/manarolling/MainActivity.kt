@@ -15,8 +15,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination
@@ -31,6 +29,7 @@ import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.ui.*
 import com.fiap.manarolling.ui.character.CharacterViewModel
 import com.fiap.manarolling.ui.theme.ManaRollingAppTheme
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,7 +127,10 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("id") { type = NavType.LongType })
                         ) { back ->
                             val id = back.arguments?.getLong("id") ?: 0L
-                            EditCharacterScreen(characterVm, id, nav)
+                            EditCharacterScreen(
+                                id = id,
+                                nav = nav,
+                                repoVM = characterVm)
                         }
 
                         // Offline (se usar)

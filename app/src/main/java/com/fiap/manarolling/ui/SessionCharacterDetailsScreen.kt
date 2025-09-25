@@ -1,5 +1,6 @@
 package com.fiap.manarolling.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -7,9 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
+import com.fiap.manarolling.model.ClassPresets
 import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +88,8 @@ fun SessionCharacterDetailsScreen(
             vm.setMana(sessionId, ownerUid, charId, coerced, manaMax)
         }
 
+        val context = LocalContext.current
+
         Column(
             Modifier
                 .padding(pad)
@@ -96,6 +103,87 @@ fun SessionCharacterDetailsScreen(
                 val vidaAttr = runCatching { ch.attributes.vida }.getOrDefault(hpMax)
                 AssistChip(onClick = {}, enabled = false, label = { Text("VIDA (atributo): $vidaAttr") })
             }
+
+            // ====== NOVO: Arma & Habilidade da Classe ======
+            val loadout = ClassPresets.loadoutFor(ch.clazz)
+            if (loadout != null) {
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("Arma & Habilidade (${ch.clazz})", style = MaterialTheme.typography.titleMedium)
+
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Arma
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Arma", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    val weaponResId = context.resources.getIdentifier(
+                                        loadout.weaponImageRes,
+                                        "drawable",
+                                        context.packageName
+                                    )
+                                    if (weaponResId != 0) {
+                                        Image(
+                                            painter = painterResource(id = weaponResId),
+                                            contentDescription = "Arma",
+                                            modifier = Modifier.size(40.dp),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                    Column {
+                                        Text(loadout.weaponName, style = MaterialTheme.typography.bodyLarge)
+                                        Text("Dano: ${loadout.weaponDamage}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+
+                            // Habilidade
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Habilidade", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    val abilityResId = context.resources.getIdentifier(
+                                        loadout.abilityImageRes,
+                                        "drawable",
+                                        context.packageName
+                                    )
+                                    if (abilityResId != 0) {
+                                        Image(
+                                            painter = painterResource(id = abilityResId),
+                                            contentDescription = "Habilidade",
+                                            modifier = Modifier.size(40.dp),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                    Column {
+                                        Text(loadout.abilityName, style = MaterialTheme.typography.bodyLarge)
+                                        val effect = if (loadout.healing) "Cura: ${loadout.abilityPower}" else "Dano: ${loadout.abilityPower}"
+                                        Text(effect, style = MaterialTheme.typography.bodySmall)
+                                        AssistChip(onClick = {}, enabled = false, label = { Text("Mana: ${loadout.manaCost}") })
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                OutlinedCard(Modifier.fillMaxWidth()) {
+                    Text(
+                        "Defina uma classe para ver a arma e a habilidade.",
+                        modifier = Modifier.padding(16.dp),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            // ====== FIM DO BLOCO NOVO ======
 
             HorizontalDivider()
 
