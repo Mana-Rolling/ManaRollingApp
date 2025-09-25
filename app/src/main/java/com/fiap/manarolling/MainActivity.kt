@@ -101,13 +101,7 @@ class MainActivity : ComponentActivity() {
                         // Criar personagem (assinatura correta da sua tela)
                         composable(Routes.CREATE) {
                             CreateCharacterScreen(
-                                onBack = { nav.popBackStack() },
-                                onCreated = { created: Character ->
-                                    nav.navigate("${Routes.DETAIL}/${created.id}") {
-                                        popUpTo(Routes.CREATE) { inclusive = true }
-                                    }
-                                },
-                                vm = settingsVm,
+                                nav = nav,
                                 repoVM = characterVm
                             )
                         }
