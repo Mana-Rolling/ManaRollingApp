@@ -24,10 +24,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.ui.*
-import com.fiap.manarolling.ui.character.CharacterViewModel
+import com.fiap.manarolling.ui.character.*
+import com.fiap.manarolling.ui.multiplayer.*
 import com.fiap.manarolling.ui.theme.ManaRollingAppTheme
 
 
@@ -124,7 +124,8 @@ class MainActivity : ComponentActivity() {
                             EditCharacterScreen(
                                 id = id,
                                 nav = nav,
-                                repoVM = characterVm)
+                                repoVM = characterVm
+                            )
                         }
 
                         // Offline (se usar)

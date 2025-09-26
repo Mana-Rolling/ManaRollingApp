@@ -1,9 +1,10 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.character
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -32,8 +33,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.fiap.manarolling.R
 import com.fiap.manarolling.model.*
-import com.fiap.manarolling.ui.character.CharacterViewModel
-import kotlin.math.max
 
 private const val VIDA_CAP = 50
 private const val STARTING_POINTS = 10
@@ -231,7 +230,7 @@ fun CreateCharacterScreen(
                                 Text("Arma", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     if (weaponResId != 0) {
-                                        Icon(painter = painterResource(weaponResId), contentDescription = "Arma", modifier = Modifier.size(40.dp))
+                                        Image(painter = painterResource(weaponResId), contentDescription = "Arma", modifier = Modifier.size(40.dp))
                                     }
                                     Column {
                                         Text(loadout.weaponName, style = MaterialTheme.typography.bodyLarge)
@@ -243,7 +242,7 @@ fun CreateCharacterScreen(
                                 Text("Habilidade", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     if (abilityResId != 0) {
-                                        Icon(painter = painterResource(abilityResId), contentDescription = "Habilidade", modifier = Modifier.size(40.dp))
+                                        Image(painter = painterResource(abilityResId), contentDescription = "Habilidade", modifier = Modifier.size(40.dp))
                                     }
                                     Column {
                                         Text(loadout.abilityName, style = MaterialTheme.typography.bodyLarge)
@@ -335,7 +334,6 @@ fun CreateCharacterScreen(
                 onClick = {
                     val vidaFinal = vida.coerceAtMost(VIDA_CAP)
                     val character = Character(
-                        id = 0L,
                         name = name.trim(),
                         region = region.trim(),
                         age = age.toIntOrNull() ?: 0,

@@ -1,4 +1,4 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.multiplayer
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.multiplayer.MultiplayerViewModel
 import com.fiap.manarolling.ui.character.CharacterViewModel
@@ -64,7 +63,7 @@ fun LobbyScreen(
                 onValueChange = { playerName = it },
                 label = { Text("Seu nome") },
                 singleLine = true,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next
                 ),
                 modifier = Modifier.fillMaxWidth()
@@ -76,7 +75,7 @@ fun LobbyScreen(
                 onValueChange = { sessionCode = it.uppercase().trim() },
                 label = { Text("Código da sessão") },
                 singleLine = true,
-                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Done,
                     keyboardType = KeyboardType.Ascii
                 ),

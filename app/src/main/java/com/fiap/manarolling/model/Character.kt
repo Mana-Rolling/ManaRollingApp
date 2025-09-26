@@ -1,5 +1,6 @@
 package com.fiap.manarolling.model
 
+import android.util.Log
 import kotlinx.serialization.Serializable
 import kotlin.math.max
 

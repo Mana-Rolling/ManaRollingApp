@@ -1,5 +1,6 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.character
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +13,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,7 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.fiap.manarolling.model.Character
-import com.fiap.manarolling.ui.character.CharacterViewModel
+import com.fiap.manarolling.ui.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +41,7 @@ fun ListCharacterScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { nav.navigate(Routes.CREATE) },
-                icon = { androidx.compose.material3.Icon(Icons.Filled.Add, contentDescription = null) },
+                icon = { Icon(Icons.Filled.Add, contentDescription = null) },
                 text = { Text("Novo personagem") }
             )
         }

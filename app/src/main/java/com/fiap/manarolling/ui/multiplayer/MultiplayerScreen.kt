@@ -1,4 +1,4 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.multiplayer
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

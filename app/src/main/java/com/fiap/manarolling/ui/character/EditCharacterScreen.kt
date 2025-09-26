@@ -1,4 +1,4 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.character
 
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -37,7 +37,6 @@ import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.model.ClassPresets
 import com.fiap.manarolling.model.RuntimeVitals
 import com.fiap.manarolling.model.Vitals
-import com.fiap.manarolling.ui.character.CharacterViewModel
 import kotlin.math.max
 
 private const val VIDA_CAP = 50

@@ -1,5 +1,6 @@
-package com.fiap.manarolling.ui
+package com.fiap.manarolling.ui.character
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +22,7 @@ import coil.compose.AsyncImage
 import com.fiap.manarolling.R
 import com.fiap.manarolling.model.Character
 import com.fiap.manarolling.model.ClassPresets
-import com.fiap.manarolling.ui.character.CharacterViewModel
+import com.fiap.manarolling.ui.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,14 +91,23 @@ fun CharacterDetailScreen(
                         contentAlignment = Alignment.BottomStart
                     ) {
                         val model = c.photoUri ?: ""
-                        AsyncImage(
-                            model = if (model.isNotBlank()) model else painterResource(R.drawable.default_character),
-                            placeholder = painterResource(R.drawable.default_character),
-                            error = painterResource(R.drawable.default_character),
-                            contentDescription = "Imagem do personagem",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                        val dfltChar = painterResource(R.drawable.default_character)
+                        if (model.isNotBlank()){
+                            AsyncImage(
+                                model = model,
+                                placeholder = painterResource(R.drawable.default_character),
+                                error = painterResource(R.drawable.default_character),
+                                contentDescription = "Imagem do personagem",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Image(
+                                painter = dfltChar,
+                                contentDescription = "Imagem do personagem",
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
                     }
                 }
             }
