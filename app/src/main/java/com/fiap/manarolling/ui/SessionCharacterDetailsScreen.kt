@@ -2,6 +2,8 @@ package com.fiap.manarolling.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -89,10 +91,11 @@ fun SessionCharacterDetailsScreen(
         }
 
         val context = LocalContext.current
-
+        val scroll = rememberScrollState()
         Column(
             Modifier
                 .padding(pad)
+                .verticalScroll(scroll)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
