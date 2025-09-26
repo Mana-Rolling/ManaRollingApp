@@ -317,6 +317,10 @@ private fun StatBar(
             Text(label)
             Text("$current / $max")
         }
-        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.fillMaxWidth(),
+            trackColor = MaterialTheme.colorScheme.outline
+        )
     }
 }

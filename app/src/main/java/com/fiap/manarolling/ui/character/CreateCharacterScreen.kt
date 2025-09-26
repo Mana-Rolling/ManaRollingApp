@@ -47,13 +47,13 @@ fun CreateCharacterScreen(
     val context = LocalContext.current
     val defaultRes = R.drawable.default_character
 
-    // ---------- Form State ----------
+    // --------- Estado do formulário ---------
     var name by remember { mutableStateOf("") }
     var region by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
     var photoUri by remember { mutableStateOf<String?>(null) }
 
-    // Classe
+    // Classe vinda dos presets existentes
     val classOptions = remember { ClassPresets.options }
     var clazz by remember { mutableStateOf(classOptions.firstOrNull().orEmpty()) }
     var clazzExpanded by remember { mutableStateOf(false) }
@@ -296,7 +296,10 @@ fun CreateCharacterScreen(
                                         points++
                                     }
                                 },
-                                enabled = value > floor
+                                enabled = value > floor,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             ) { Text("–") }
 
                             Text("$value", style = MaterialTheme.typography.titleMedium)
@@ -308,7 +311,10 @@ fun CreateCharacterScreen(
                                         points--
                                     }
                                 },
-                                enabled = points > 0
+                                enabled = points > 0,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
                             ) { Text("+") }
                         }
                     }

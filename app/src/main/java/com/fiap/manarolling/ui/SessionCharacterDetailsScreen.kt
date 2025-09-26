@@ -243,7 +243,10 @@ private fun StatBarInline(
             Text(label)
             Text("$current / $max")
         }
-        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier.fillMaxWidth(),
+            trackColor = MaterialTheme.colorScheme.outline)
 
         if (editable) {
             Spacer(Modifier.height(8.dp))

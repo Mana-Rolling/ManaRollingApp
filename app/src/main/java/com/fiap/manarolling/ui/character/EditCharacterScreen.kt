@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -241,10 +242,14 @@ fun EditCharacterScreen(
                         Text("Arma & Habilidade ($clazz)", style = MaterialTheme.typography.titleMedium)
 
                         val weaponResId = context.resources.getIdentifier(
-                            loadout.weaponImageRes, "drawable", context.packageName
+                            loadout.weaponImageRes,
+                            "drawable",
+                            context.packageName
                         )
                         val abilityResId = context.resources.getIdentifier(
-                            loadout.abilityImageRes, "drawable", context.packageName
+                            loadout.abilityImageRes,
+                            "drawable",
+                            context.packageName
                         )
 
                         Row(
@@ -256,7 +261,10 @@ fun EditCharacterScreen(
                                 Text("Arma", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     if (weaponResId != 0) {
-                                        Icon(painter = painterResource(weaponResId), contentDescription = "Arma", modifier = Modifier.size(40.dp))
+                                        Image(
+                                            painter = painterResource(weaponResId),
+                                            contentDescription = "Arma",
+                                            modifier = Modifier.size(40.dp))
                                     }
                                     Column {
                                         Text(loadout.weaponName, style = MaterialTheme.typography.bodyLarge)
@@ -268,7 +276,10 @@ fun EditCharacterScreen(
                                 Text("Habilidade", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     if (abilityResId != 0) {
-                                        Icon(painter = painterResource(abilityResId), contentDescription = "Habilidade", modifier = Modifier.size(40.dp))
+                                        Image(
+                                            painter = painterResource(abilityResId),
+                                            contentDescription = "Habilidade",
+                                            modifier = Modifier.size(40.dp))
                                     }
                                     Column {
                                         Text(loadout.abilityName, style = MaterialTheme.typography.bodyLarge)
@@ -324,7 +335,10 @@ fun EditCharacterScreen(
                                         points++
                                     }
                                 },
-                                enabled = value > floor
+                                enabled = value > floor,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
                             ) { Text("–") }
 
                             Text("$value", style = MaterialTheme.typography.titleMedium)
@@ -336,7 +350,10 @@ fun EditCharacterScreen(
                                         points--
                                     }
                                 },
-                                enabled = points > 0
+                                enabled = points > 0,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
                             ) { Text("+") }
                         }
                     }

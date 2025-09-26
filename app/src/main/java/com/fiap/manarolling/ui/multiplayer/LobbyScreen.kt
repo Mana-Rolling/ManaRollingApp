@@ -135,7 +135,8 @@ fun LobbyScreen(
                             }
                         }
                     },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Icon(Icons.Filled.ArrowForward, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
