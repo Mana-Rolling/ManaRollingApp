@@ -105,6 +105,7 @@ fun CharacterDetailScreen(
                             Image(
                                 painter = dfltChar,
                                 contentDescription = "Imagem do personagem",
+                                contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize()
                             )
                         }

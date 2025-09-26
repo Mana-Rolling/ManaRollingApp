@@ -59,16 +59,26 @@ fun CreateCharacterScreen(
 
     fun baseFor(c: String): Attributes = ClassPresets.base[c] ?: Attributes()
 
+    fun calcVida(base: Int, level: Int): Int {
+        return (base + (level * 5)).coerceAtMost(VIDA_CAP)
+    }
+
     // Atributos (sempre >= piso da classe)
+    var level by remember { mutableStateOf("0") }
+    var points by remember { mutableStateOf(STARTING_POINTS) }
     var intel by remember(clazz) { mutableStateOf(baseFor(clazz).intelligence) }
     var dex   by remember(clazz) { mutableStateOf(baseFor(clazz).dexterity) }
     var str   by remember(clazz) { mutableStateOf(baseFor(clazz).strength) }
     var agi   by remember(clazz) { mutableStateOf(baseFor(clazz).agility) }
     var cha   by remember(clazz) { mutableStateOf(baseFor(clazz).charisma) }
-    var vida  by remember(clazz) { mutableStateOf(baseFor(clazz).vida.coerceAtMost(VIDA_CAP)) }
+    var vida  by remember(clazz) { mutableStateOf(calcVida(baseFor(clazz).vida, level.toIntOrNull() ?: 1)) }
 
-    var level by remember { mutableStateOf("1") }
-    var points by remember { mutableStateOf(STARTING_POINTS) }
+    // Atualiza vida toda vez que nível muda
+    LaunchedEffect(level) {
+        val lvl = level.toIntOrNull() ?: 1
+        val baseVida = baseFor(clazz).vida
+        vida = calcVida(baseVida, lvl)
+    }
 
     // Troca de classe → eleva atributos que ficaram abaixo do novo piso (sem cobrar pontos)
     LaunchedEffect(clazz) {
@@ -79,7 +89,7 @@ fun CreateCharacterScreen(
         str   = bump(str,  b.strength)
         agi   = bump(agi,  b.agility)
         cha   = bump(cha,  b.charisma)
-        vida  = bump(vida, b.vida).coerceAtMost(VIDA_CAP)
+        vida  = calcVida(b.vida, level.toIntOrNull() ?: 1)
     }
 
     // Picker de imagem
@@ -297,7 +307,7 @@ fun CreateCharacterScreen(
                                 },
                                 enabled = value > floor,
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    containerColor = MaterialTheme.colorScheme.primary
                                 )
                             ) { Text("–") }
 
@@ -312,7 +322,55 @@ fun CreateCharacterScreen(
                                 },
                                 enabled = points > 0,
                                 colors = ButtonDefaults.filledTonalButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) { Text("+") }
+                        }
+                    }
+                }
+            }
+
+            @Composable
+            fun RowAttrLife(
+                title: String,
+                value: Int,
+                floor: Int,
+                onChanged: (Int) -> Unit
+            ) {
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(title, modifier = Modifier.weight(1f))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(
+                                onClick = {
+                                    if (value > floor) {
+                                        onChanged(value - 1)
+                                        points++
+                                    }
+                                },
+                                enabled = value > floor,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) { Text("–") }
+
+                            Text("$value", style = MaterialTheme.typography.titleMedium)
+
+                            FilledTonalButton(
+                                onClick = {
+                                    if (value < VIDA_CAP) {
+                                        onChanged(value + 1)
+                                        points--
+                                    }
+                                },
+                                enabled = value < VIDA_CAP,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
                                 )
                             ) { Text("+") }
                         }
@@ -321,7 +379,7 @@ fun CreateCharacterScreen(
             }
 
             val piso = baseFor(clazz)
-            RowAttr("Vida (HP Máx)", vida, piso.vida) { v -> vida = v.coerceAtMost(VIDA_CAP) }
+            RowAttrLife("Vida (HP Máx)", vida, piso.vida) { v -> vida = v.coerceAtMost(VIDA_CAP) }
             RowAttr("Inteligência",  intel, piso.intelligence) { intel = it }
             RowAttr("Destreza",      dex,   piso.dexterity)    { dex   = it }
             RowAttr("Força",         str,   piso.strength)     { str   = it }
@@ -332,7 +390,8 @@ fun CreateCharacterScreen(
 
             Button(
                 onClick = {
-                    val vidaFinal = vida.coerceAtMost(VIDA_CAP)
+                    val lvl = level.toIntOrNull() ?: 1
+                    val vidaFinal = calcVida(baseFor(clazz).vida, lvl)
                     val character = Character(
                         name = name.trim(),
                         region = region.trim(),

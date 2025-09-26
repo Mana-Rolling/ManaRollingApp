@@ -41,6 +41,10 @@ import kotlin.math.max
 
 private const val VIDA_CAP = 50
 
+fun calcVida(base: Int, level: Int): Int {
+    return (base + (level * 5)).coerceAtMost(VIDA_CAP)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditCharacterScreen(
@@ -85,26 +89,33 @@ fun EditCharacterScreen(
     fun baseFor(c: String): Attributes = ClassPresets.base[c] ?: Attributes()
 
     // Atributos iniciam do personagem (respeitando CAP e piso)
+    var level by remember { mutableStateOf(original.level.toString()) }
+    var points by remember { mutableStateOf(original.availablePoints) }
     var intel by remember { mutableStateOf(max(original.attributes.intelligence, baseFor(clazz).intelligence)) }
     var dex   by remember { mutableStateOf(max(original.attributes.dexterity,    baseFor(clazz).dexterity)) }
     var str   by remember { mutableStateOf(max(original.attributes.strength,     baseFor(clazz).strength)) }
     var agi   by remember { mutableStateOf(max(original.attributes.agility,      baseFor(clazz).agility)) }
     var cha   by remember { mutableStateOf(max(original.attributes.charisma,     baseFor(clazz).charisma)) }
-    var vida  by remember { mutableStateOf(max(original.attributes.vida,         baseFor(clazz).vida).coerceAtMost(VIDA_CAP)) }
+    var vida  by remember { mutableStateOf(calcVida(baseFor(clazz).vida, level.toIntOrNull() ?: 1)) }
 
-    var level by remember { mutableStateOf(original.level.toString()) }
-    var points by remember { mutableStateOf(original.availablePoints) }
 
     // Ao trocar de classe, elevar atributos que ficaram abaixo do NOVO piso (sem cobrar pontos)
     LaunchedEffect(clazz) {
         val b = baseFor(clazz)
+        val lvl = level.toIntOrNull() ?: 1
         fun bump(cur: Int, floor: Int) = if (cur < floor) floor else cur
         intel = bump(intel, b.intelligence)
         dex   = bump(dex,  b.dexterity)
         str   = bump(str,  b.strength)
         agi   = bump(agi,  b.agility)
         cha   = bump(cha,  b.charisma)
-        vida  = bump(vida, b.vida).coerceAtMost(VIDA_CAP)
+        vida  = calcVida(b.vida, lvl)
+    }
+
+    LaunchedEffect(level) {
+        val lvl = level.toIntOrNull() ?: 1
+        val baseVida = baseFor(clazz).vida
+        vida = calcVida(baseVida, lvl)
     }
 
     // Picker de imagem (mesma UX da criação)
@@ -157,16 +168,27 @@ fun EditCharacterScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = photoUri ?: painterResource(R.drawable.default_character),
-                        placeholder = painterResource(R.drawable.default_character),
-                        error = painterResource(R.drawable.default_character),
-                        contentDescription = "Foto/ilustração do personagem",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(72.dp)
-                            .padding(4.dp)
-                    )
+                    if (photoUri != null){
+                        AsyncImage(
+                            model = photoUri,
+                            placeholder = painterResource(R.drawable.default_character),
+                            error = painterResource(R.drawable.default_character),
+                            contentDescription = "Foto/ilustração do personagem",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(72.dp)
+                                .padding(4.dp)
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.default_character),
+                            contentDescription = "Imagem do personagem",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(72.dp)
+                                .padding(4.dp)
+                        )
+                    }
                     Text("Toque para escolher imagem", style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.weight(1f))
                     Icon(Icons.Filled.Image, contentDescription = null)
@@ -359,8 +381,56 @@ fun EditCharacterScreen(
                 }
             }
 
+            @Composable
+            fun RowAttrLife(
+                title: String,
+                value: Int,
+                floor: Int,
+                onChanged: (Int) -> Unit
+            ) {
+                ElevatedCard(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(title, modifier = Modifier.weight(1f))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledTonalButton(
+                                onClick = {
+                                    if (value > floor) {
+                                        onChanged(value - 1)
+                                        points++
+                                    }
+                                },
+                                enabled = value > floor,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) { Text("–") }
+
+                            Text("$value", style = MaterialTheme.typography.titleMedium)
+
+                            FilledTonalButton(
+                                onClick = {
+                                    if (value < VIDA_CAP) {
+                                        onChanged(value + 1)
+                                        points--
+                                    }
+                                },
+                                enabled = value < VIDA_CAP,
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) { Text("+") }
+                        }
+                    }
+                }
+            }
+
             val piso = baseFor(clazz)
-            RowAttr("Vida (HP Máx)", vida, piso.vida) { v -> vida = v.coerceAtMost(VIDA_CAP) }
+            RowAttrLife("Vida (HP Máx)", vida, piso.vida) { v -> vida = v.coerceAtMost(VIDA_CAP) }
             RowAttr("Inteligência",  intel, piso.intelligence) { intel = it }
             RowAttr("Destreza",      dex,   piso.dexterity)    { dex   = it }
             RowAttr("Força",         str,   piso.strength)     { str   = it }
